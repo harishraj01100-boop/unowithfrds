@@ -117,7 +117,7 @@
         <div class="waiting-details">
           <div class="panel-header">
             <h2>Lobby Waiting Area</h2>
-            <p>Share code with friends. (2-4 players required)</p>
+            <p>Share code with friends. (2-10 players required)</p>
           </div>
 
           <div class="code-share-block">
@@ -131,7 +131,7 @@
           </div>
 
           <div class="players-list-section">
-            <h3>Players Joined (<span id="players-count">0</span>/4)</h3>
+            <h3>Players Joined (<span id="players-count">0</span>/10)</h3>
             <ul id="lobby-players-list" class="players-list">
               <!-- Dynamically populated -->
             </ul>
@@ -229,6 +229,11 @@
             <span id="active-color-name" class="color-text-red">RED</span>
           </div>
 
+          <!-- Challenge Wait status -->
+          <div class="challenge-announcement" id="challenge-announcement-bar" style="display: none;">
+            <i class="fa-solid fa-hourglass-half"></i> <span id="challenge-announcement-text">Waiting for Player to Accept or Challenge...</span>
+          </div>
+
           <!-- Bottom Control Bar & Player Deck -->
           <div class="player-hud">
             
@@ -303,6 +308,34 @@
     </div>
   </div>
 
+  <!-- MODAL 3: +4 CHALLENGE CHOICE -->
+  <div id="challenge-modal" class="modal-overlay">
+    <div class="modal-content challenge-content">
+      <div class="challenge-header" style="text-align: center; margin-bottom: 1.5rem;">
+        <i class="fa-solid fa-triangle-exclamation warning-glow" style="font-size: 3rem; color: #f59e0b; margin-bottom: 0.5rem; display: block;"></i>
+        <h2>Wild Draw Four Challenge!</h2>
+      </div>
+      <p style="text-align: center; font-size: 1.1rem; margin-bottom: 1rem;">
+        <b id="challenge-played-by-name">Player</b> played a Wild Draw Four card on you!
+      </p>
+      <p class="challenge-hint" style="text-align: center; color: var(--text-muted); font-size: 0.95rem; margin-bottom: 1.5rem;">
+        You can challenge this play if you suspect they have a card matching the previous active suit color.
+      </p>
+      <div class="challenge-details" style="background: rgba(255,255,255,0.05); padding: 1rem; border-radius: 8px; font-size: 0.9rem; margin-bottom: 1.5rem; border: 1px solid rgba(255,255,255,0.1);">
+        <p style="margin-bottom: 0.5rem;"><span style="color:#10b981; font-weight:bold;">✔ Challenge Succeeds:</span> They draw 4 cards. You draw 0 and play your turn.</p>
+        <p style="margin: 0;"><span style="color:#ef4444; font-weight:bold;">❌ Challenge Fails:</span> You draw 6 cards (4 + 2 penalty) and lose your turn.</p>
+      </div>
+      <div class="modal-actions" style="display: flex; gap: 1rem; justify-content: center; width: 100%;">
+        <button id="challenge-accept-btn" class="btn btn-accent btn-glow" style="flex: 1; padding: 0.8rem 1rem;">
+          <i class="fa-solid fa-check"></i> Accept (+4)
+        </button>
+        <button id="challenge-btn" class="btn btn-danger btn-glow" style="flex: 1; padding: 0.8rem 1rem;">
+          <i class="fa-solid fa-bolt"></i> Challenge!
+        </button>
+      </div>
+    </div>
+  </div>
+
   <!-- AUDIO ELEMENTS FOR GAME SOUNDS -->
   <audio id="sound-deal" src="https://assets.mixkit.co/active_storage/sfx/2019/2019-84.wav" preload="auto"></audio>
   <audio id="sound-play" src="https://assets.mixkit.co/active_storage/sfx/1004/1004-84.wav" preload="auto"></audio>
@@ -310,18 +343,6 @@
   <audio id="sound-uno" src="https://assets.mixkit.co/active_storage/sfx/1435/1435-84.wav" preload="auto"></audio>
   <audio id="sound-penalty" src="https://assets.mixkit.co/active_storage/sfx/2501/2501-84.wav" preload="auto"></audio>
   <audio id="sound-win" src="https://assets.mixkit.co/active_storage/sfx/1917/1917-84.wav" preload="auto"></audio>
-
-  <!-- PWA Install Banner (Subtle inline banner) -->
-  <div id="pwa-install-banner" class="pwa-banner hidden">
-    <div class="pwa-banner-content">
-      <i class="fa-solid fa-mobile-screen-button"></i>
-      <span>Install UNO ARENA to your home screen!</span>
-    </div>
-    <div class="pwa-banner-actions">
-      <button id="pwa-install-btn" class="btn btn-accent btn-sm">Install</button>
-      <button id="pwa-close-btn" class="btn-icon-sm"><i class="fa-solid fa-xmark"></i></button>
-    </div>
-  </div>
 
   <!-- Socket.IO and Frontend App Logic -->
   <script src="/socket.io/socket.io.js"></script>

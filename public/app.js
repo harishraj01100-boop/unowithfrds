@@ -76,6 +76,12 @@ const leaderboardList = document.getElementById('leaderboard-list');
 const restartLobbyBtn = document.getElementById('restart-lobby-btn');
 const nonHostRestartMsg = document.getElementById('non-host-restart-msg');
 const quitGameBtn = document.getElementById('quit-game-btn');
+const challengeModal = document.getElementById('challenge-modal');
+const challengePlayedByName = document.getElementById('challenge-played-by-name');
+const challengeAcceptBtn = document.getElementById('challenge-accept-btn');
+const challengeBtn = document.getElementById('challenge-btn');
+const challengeAnnouncementBar = document.getElementById('challenge-announcement-bar');
+const challengeAnnouncementText = document.getElementById('challenge-announcement-text');
 
 // DOM Elements - Backend Settings Panel
 const toggleBackendSettingsBtn = document.getElementById('toggle-backend-settings-btn');
@@ -361,11 +367,29 @@ function bindSocketEvents() {
 
       colorPickerModal.classList.remove('active');
       leaderboardModal.classList.remove('active');
+      challengeModal.classList.remove('active');
       return;
     }
 
     // GAME RUNNING VIEW
     showScreen(gameScreen);
+
+    // Handle +4 Pending Challenge display
+    if (state.pendingChallenge) {
+      const isTargetMe = state.pendingChallenge.targetId === myPlayerId;
+      if (isTargetMe) {
+        challengeModal.classList.add('active');
+        challengePlayedByName.innerText = state.pendingChallenge.playedByName;
+        challengeAnnouncementBar.style.display = 'none';
+      } else {
+        challengeModal.classList.remove('active');
+        challengeAnnouncementBar.style.display = 'block';
+        challengeAnnouncementText.innerText = `Waiting for ${state.pendingChallenge.targetName} to Accept or Challenge +4...`;
+      }
+    } else {
+      challengeModal.classList.remove('active');
+      challengeAnnouncementBar.style.display = 'none';
+    }
 
     // Dock chat container into sidebar on large screens
     const chatBox = document.querySelector('.chat-container');
@@ -472,7 +496,7 @@ function bindSocketEvents() {
       handCardsCount.innerText = mySelf.hand.length;
 
       mySelf.hand.forEach((card, idx) => {
-        const isPlayable = isMyTurn && (
+        const isPlayable = isMyTurn && !state.pendingChallenge && (
           card.color === 'wild' ||
           card.color === state.currentSelectedColor ||
           card.value.toString() === state.discardPile[state.discardPile.length - 1].value.toString()
@@ -542,7 +566,7 @@ function bindSocketEvents() {
 
 // Draw Card
 deckDrawPile.addEventListener('click', () => {
-  if (!currentGameState) return;
+  if (!currentGameState || currentGameState.pendingChallenge) return;
   const activePlayer = currentGameState.players[currentGameState.turnIndex];
   if (activePlayer.id !== myPlayerId) return; // not my turn
   if (hasDrawnCardThisTurn) return;
@@ -560,6 +584,16 @@ gamePassBtn.addEventListener('click', () => {
 // Call UNO
 gameUnoBtn.addEventListener('click', () => {
   socket.emit('declareUno');
+});
+
+// Accept +4 Challenge
+challengeAcceptBtn.addEventListener('click', () => {
+  socket.emit('acceptDraw4');
+});
+
+// Challenge +4
+challengeBtn.addEventListener('click', () => {
+  socket.emit('challengeDraw4');
 });
 
 // Color Picker slice clicks
@@ -643,40 +677,7 @@ function createCardElement(card, isPlayable, onClickHandler) {
   return cardDiv;
 }
 
-// --- PWA Installation setup ---
-let deferredPrompt;
-const pwaInstallBanner = document.getElementById('pwa-install-banner');
-const pwaInstallBtn = document.getElementById('pwa-install-btn');
-const pwaCloseBtn = document.getElementById('pwa-close-btn');
 
-window.addEventListener('beforeinstallprompt', (e) => {
-  e.preventDefault();
-  deferredPrompt = e;
-  if (pwaInstallBanner) {
-    pwaInstallBanner.classList.remove('hidden');
-  }
-});
-
-if (pwaInstallBtn) {
-  pwaInstallBtn.addEventListener('click', () => {
-    if (!deferredPrompt) return;
-    deferredPrompt.prompt();
-    deferredPrompt.userChoice.then((choiceResult) => {
-      deferredPrompt = null;
-      if (pwaInstallBanner) {
-        pwaInstallBanner.classList.add('hidden');
-      }
-    });
-  });
-}
-
-if (pwaCloseBtn) {
-  pwaCloseBtn.addEventListener('click', () => {
-    if (pwaInstallBanner) {
-      pwaInstallBanner.classList.add('hidden');
-    }
-  });
-}
 
 // Register service worker
 if ('serviceWorker' in navigator) {

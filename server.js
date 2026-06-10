@@ -118,6 +118,22 @@ function getNextTurnIndex(room, offset = 1) {
   return room.turnIndex; // Default callback fallback
 }
 
+// Helper: Check if the game is finished
+function checkGameFinished(room) {
+  const activePlayersRemaining = room.players.filter(p => p.hand.length > 0);
+  if (activePlayersRemaining.length <= 1) {
+    if (activePlayersRemaining.length === 1) {
+      const lastPlayer = activePlayersRemaining[0];
+      if (!room.winnerRankings.includes(lastPlayer.name)) {
+        room.winnerRankings.push(lastPlayer.name);
+      }
+    }
+    room.gameFinished = true;
+    return true;
+  }
+  return false;
+}
+
 // Helper: Safely serialize game state for a specific client (hiding other players' hands)
 function sanitizeGameState(room, socketId) {
   return {
@@ -130,6 +146,13 @@ function sanitizeGameState(room, socketId) {
     discardPile: room.discardPile.slice(-1), // only top card is visible
     deckCount: room.deck.length,
     winnerRankings: room.winnerRankings,
+    pendingChallenge: room.pendingChallenge ? {
+      playedById: room.pendingChallenge.playedById,
+      playedByName: room.pendingChallenge.playedByName,
+      targetId: room.pendingChallenge.targetId,
+      targetName: room.pendingChallenge.targetName,
+      wildColor: room.pendingChallenge.wildColor
+    } : null,
     players: room.players.map(p => ({
       id: p.id,
       name: p.name,
@@ -213,8 +236,8 @@ io.on('connection', (socket) => {
     if (room.gameStarted) {
       return socket.emit('errorMsg', 'This game has already started.');
     }
-    if (room.players.length >= 4) {
-      return socket.emit('errorMsg', 'Room is full (max 4 players).');
+    if (room.players.length >= 10) {
+      return socket.emit('errorMsg', 'Room is full (max 10 players).');
     }
 
     // Add player to room state
@@ -404,6 +427,43 @@ io.on('connection', (socket) => {
       return socket.emit('errorMsg', "Please select a valid color (Red, Blue, Green, Yellow) for the Wild card.");
     }
 
+    // Wild Draw Four restriction and challenge setup
+    if (card.value === 'draw4') {
+      const activeColorBeforePlay = room.currentSelectedColor;
+      const wasIllegal = activePlayer.hand.some(c => c.color === activeColorBeforePlay);
+
+      // Play card: Remove from hand, put in discard pile
+      activePlayer.hand.splice(cardIndex, 1);
+      card.color = wildColor; // Keep track of chosen color in discard pile representation
+      room.discardPile.push(card);
+      room.currentSelectedColor = wildColor;
+      room.hasDrawnThisTurn = false;
+
+      // Set challenge state
+      const targetPlayerIndex = getNextTurnIndex(room, 1);
+      const targetPlayer = room.players[targetPlayerIndex];
+
+      room.pendingChallenge = {
+        playedById: activePlayer.id,
+        playedByName: activePlayer.name,
+        targetId: targetPlayer.id,
+        targetName: targetPlayer.name,
+        wasIllegal: wasIllegal,
+        wildColor: wildColor,
+        prevSelectedColor: activeColorBeforePlay
+      };
+
+      broadcastGameState(room);
+
+      io.to(currentRoomCode).emit('chatMessage', {
+        sender: 'System',
+        text: `${activePlayer.name} played WILD DRAW FOUR choosing ${wildColor.toUpperCase()}. Waiting for ${targetPlayer.name} to Accept or Challenge!`,
+        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+      });
+
+      return;
+    }
+
     // Play card: Remove from hand, put in discard pile
     activePlayer.hand.splice(cardIndex, 1);
     room.discardPile.push(card);
@@ -438,10 +498,6 @@ io.on('connection', (socket) => {
       drawCountForNext = 2;
       nextTurnOffset = 2; // draw 2 also skips the target's turn
       systemText += ` Next player draws 2 cards and skips their turn.`;
-    } else if (card.value === 'draw4') {
-      drawCountForNext = 4;
-      nextTurnOffset = 2; // draw 4 also skips the target's turn
-      systemText += ` Next player draws 4 cards and skips their turn.`;
     }
 
     // Check if current player has finished
@@ -453,7 +509,7 @@ io.on('connection', (socket) => {
       }
     }
 
-    // Apply drawing penalty to the next player if needed
+    // Apply drawing penalty to the next player if needed (only for draw2)
     if (drawCountForNext > 0) {
       const targetPlayerIndex = getNextTurnIndex(room, 1);
       const targetPlayer = room.players[targetPlayerIndex];
@@ -463,25 +519,133 @@ io.on('connection', (socket) => {
     }
 
     // Check if game is completely finished
-    // Game finishes when:
-    // - only one player is left with cards, OR
-    // - in general, when players.length - winnerRankings.length <= 1
-    const activePlayersRemaining = room.players.filter(p => p.hand.length > 0);
-    if (activePlayersRemaining.length <= 1) {
-      // Add the final remaining player to rankings
-      if (activePlayersRemaining.length === 1) {
-        const lastPlayer = activePlayersRemaining[0];
-        if (!room.winnerRankings.includes(lastPlayer.name)) {
-          room.winnerRankings.push(lastPlayer.name);
-        }
-      }
-      room.gameFinished = true;
-      systemText += ` Game over! Leaderboard established.`;
-    }
+    checkGameFinished(room);
 
     // Determine the next player's index
     if (!room.gameFinished) {
-      // Standard offset calculation
+      room.turnIndex = getNextTurnIndex(room, nextTurnOffset);
+    }
+
+    broadcastGameState(room);
+
+    io.to(currentRoomCode).emit('chatMessage', {
+      sender: 'System',
+      text: systemText,
+      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    });
+
+    if (room.gameFinished) {
+      io.to(currentRoomCode).emit('gameOver', room.winnerRankings);
+    }
+  });
+
+  // 6b. Accept Draw 4
+  socket.on('acceptDraw4', () => {
+    const room = rooms[currentRoomCode];
+    if (!room || !room.gameStarted || room.gameFinished || !room.pendingChallenge) return;
+
+    const challenge = room.pendingChallenge;
+    if (challenge.targetId !== socket.id) {
+      return socket.emit('errorMsg', "Only the target player can accept.");
+    }
+
+    const targetPlayer = room.players.find(p => p.id === challenge.targetId);
+    const playedByPlayer = room.players.find(p => p.id === challenge.playedById);
+    if (!targetPlayer || !playedByPlayer) return;
+
+    // Target draws 4 cards
+    const drawn = drawCardFromDeck(room, 4);
+    targetPlayer.hand.push(...drawn);
+    targetPlayer.unoDeclared = false;
+
+    // Clear challenge
+    room.pendingChallenge = null;
+
+    let systemText = `${targetPlayer.name} accepted the WILD DRAW FOUR, drew 4 cards, and missed their turn.`;
+
+    // Check if playedByPlayer finished
+    if (playedByPlayer.hand.length === 0) {
+      if (!room.winnerRankings.includes(playedByPlayer.name)) {
+        room.winnerRankings.push(playedByPlayer.name);
+        systemText += ` 🏆 ${playedByPlayer.name} has finished all their cards!`;
+      }
+    }
+
+    // Check if game is finished
+    checkGameFinished(room);
+
+    if (!room.gameFinished) {
+      // Advance turn by 2 (skip target)
+      room.turnIndex = getNextTurnIndex(room, 2);
+    }
+
+    broadcastGameState(room);
+
+    io.to(currentRoomCode).emit('chatMessage', {
+      sender: 'System',
+      text: systemText,
+      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    });
+
+    if (room.gameFinished) {
+      io.to(currentRoomCode).emit('gameOver', room.winnerRankings);
+    }
+  });
+
+  // 6c. Challenge Draw 4
+  socket.on('challengeDraw4', () => {
+    const room = rooms[currentRoomCode];
+    if (!room || !room.gameStarted || room.gameFinished || !room.pendingChallenge) return;
+
+    const challenge = room.pendingChallenge;
+    if (challenge.targetId !== socket.id) {
+      return socket.emit('errorMsg', "Only the target player can challenge.");
+    }
+
+    const targetPlayer = room.players.find(p => p.id === challenge.targetId);
+    const playedByPlayer = room.players.find(p => p.id === challenge.playedById);
+    if (!targetPlayer || !playedByPlayer) return;
+
+    const wasIllegal = challenge.wasIllegal;
+    room.pendingChallenge = null;
+
+    let systemText = "";
+    let nextTurnOffset = 1;
+
+    if (wasIllegal) {
+      // Challenge Successful! PlayedBy draws 4 penalty cards. Target draws 0 and plays their turn.
+      const drawn = drawCardFromDeck(room, 4);
+      playedByPlayer.hand.push(...drawn);
+      playedByPlayer.unoDeclared = false;
+
+      systemText = `🎯 Challenge SUCCESSFUL! ${playedByPlayer.name} played Wild Draw Four illegally (had active color ${challenge.prevSelectedColor.toUpperCase()}). ${playedByPlayer.name} draws 4 cards!`;
+
+      // Target player is not skipped, plays their turn.
+      nextTurnOffset = 1;
+    } else {
+      // Challenge Failed! Target draws 6 cards (4 + 2 penalty) and is skipped.
+      const drawn = drawCardFromDeck(room, 6);
+      targetPlayer.hand.push(...drawn);
+      targetPlayer.unoDeclared = false;
+
+      systemText = `❌ Challenge FAILED! ${playedByPlayer.name} played Wild Draw Four legally. ${targetPlayer.name} draws 6 cards (4 + 2 penalty) and misses their turn!`;
+
+      // Target player is skipped.
+      nextTurnOffset = 2;
+    }
+
+    // Check if playedByPlayer finished
+    if (playedByPlayer.hand.length === 0) {
+      if (!room.winnerRankings.includes(playedByPlayer.name)) {
+        room.winnerRankings.push(playedByPlayer.name);
+        systemText += ` 🏆 ${playedByPlayer.name} has finished all their cards!`;
+      }
+    }
+
+    // Check if game is finished
+    checkGameFinished(room);
+
+    if (!room.gameFinished) {
       room.turnIndex = getNextTurnIndex(room, nextTurnOffset);
     }
 
@@ -614,6 +778,11 @@ io.on('connection', (socket) => {
 
         // Remove from players list
         room.players.splice(playerIndex, 1);
+
+        // If a pending challenge involves the disconnecting player, clear it
+        if (room.pendingChallenge && (room.pendingChallenge.playedById === socket.id || room.pendingChallenge.targetId === socket.id)) {
+          room.pendingChallenge = null;
+        }
 
         // Put left hand cards back into deck so we don't lose cards
         if (leftHand.length > 0) {

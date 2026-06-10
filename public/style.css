@@ -1374,6 +1374,31 @@ body {
     --card-width: 75px;
     --card-height: 115px;
   }
+
+  .card {
+    border-width: 3px;
+  }
+
+  .card-oval {
+    border-width: 3px;
+  }
+
+  .card-center-val {
+    font-size: 2.2rem;
+  }
+
+  .card-top-left,
+  .card-bottom-right {
+    font-size: 0.8rem;
+  }
+
+  .card-center-val i {
+    font-size: 1.8rem;
+  }
+
+  .player-hand .card {
+    margin-right: -25px;
+  }
   
   .game-layout {
     grid-template-columns: 1fr;
@@ -1438,6 +1463,54 @@ body {
     --card-height: 100px;
   }
 
+  .card {
+    border-width: 2.5px;
+  }
+
+  .card-oval {
+    border-width: 2.5px;
+  }
+
+  .card-center-val {
+    font-size: 1.8rem;
+  }
+
+  .card-top-left,
+  .card-bottom-right {
+    font-size: 0.75rem;
+  }
+
+  .card-center-val i {
+    font-size: 1.4rem;
+  }
+
+  .mini-cards-draw2 {
+    width: 32px;
+    height: 28px;
+  }
+
+  .mini-cards-draw2 .mini-card-shape {
+    width: 14px;
+    height: 22px;
+    border-width: 1.5px;
+  }
+
+  .draw4-cards-container {
+    width: 35px;
+    height: 30px;
+  }
+
+  .draw4-card-shape {
+    width: 12px;
+    height: 18px;
+    border-width: 1px;
+  }
+
+  .draw4-card-shape.red { left: 1px; top: 8px; }
+  .draw4-card-shape.blue { left: 7px; top: 1px; }
+  .draw4-card-shape.green { left: 13px; top: 4px; }
+  .draw4-card-shape.yellow { left: 19px; top: 10px; }
+
   .app-container {
     padding: 0.5rem;
   }
@@ -1479,11 +1552,11 @@ body {
   }
 
   .player-hand {
-    gap: -30px;
+    gap: 0;
   }
 
   .player-hand .card {
-    margin-right: -45px;
+    margin-right: -20px;
   }
 
   .hud-controls {
@@ -1562,5 +1635,39 @@ body {
   border-radius: 8px;
   padding: 1rem;
   transition: all 0.3s ease;
+}
+
+/* ==========================================
+   WILD DRAW 4 CHALLENGE ANNOUNCEMENT BAR
+   ========================================== */
+.challenge-announcement {
+  text-align: center;
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.4);
+  border-radius: 8px;
+  padding: 0.5rem 1rem;
+  font-size: 0.9rem;
+  width: fit-content;
+  margin: 0.8rem auto 0 auto;
+  letter-spacing: 0.5px;
+  color: #fca5a5;
+  box-shadow: 0 0 10px rgba(239, 68, 68, 0.15);
+  animation: pulse-border-red 2.5s infinite alternate;
+}
+
+.challenge-announcement i {
+  color: #ef4444;
+  margin-right: 0.4rem;
+}
+
+@keyframes pulse-border-red {
+  from {
+    border-color: rgba(239, 68, 68, 0.3);
+    box-shadow: 0 0 8px rgba(239, 68, 68, 0.1);
+  }
+  to {
+    border-color: rgba(239, 68, 68, 0.7);
+    box-shadow: 0 0 15px rgba(239, 68, 68, 0.3);
+  }
 }
 
