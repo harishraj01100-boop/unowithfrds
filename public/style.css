@@ -1128,17 +1128,13 @@ body {
 
 .player-hand {
   display: flex;
-  gap: -20px; /* Overlapped cards layout */
+  gap: 0.75rem; /* nice spacing between cards to show full cards */
 }
 
-/* Overlapping hand negative margins */
+/* No overlapping hand margins - show full cards */
 .player-hand .card {
-  margin-right: -40px;
-  flex-shrink: 0;
-}
-
-.player-hand .card:last-child {
   margin-right: 0;
+  flex-shrink: 0;
 }
 
 /* --- Modals Overlays --- */
@@ -1422,9 +1418,7 @@ body {
     font-size: 1.8rem;
   }
 
-  .player-hand .card {
-    margin-right: -25px;
-  }
+
   
   .game-layout {
     grid-template-columns: 1fr;
@@ -1583,11 +1577,11 @@ body {
   }
 
   .player-hand {
-    gap: 0;
+    gap: 0.5rem;
   }
 
   .player-hand .card {
-    margin-right: -20px;
+    margin-right: 0;
   }
 
   .hud-controls {
