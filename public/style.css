@@ -753,124 +753,132 @@ body {
   color: #fff;
 }
 
-/* --- Card Styles --- */
+/* --- Card Styles (Official Realistic Design) --- */
 .card {
   width: var(--card-width);
   height: var(--card-height);
-  border-radius: 12px;
-  background: var(--bg-panel-solid);
-  border: 2px solid #fff;
+  border-radius: 10px;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  padding: 0.6rem;
+  padding: 0.4rem;
   position: relative;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.4);
   transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
   user-select: none;
-  font-weight: 800;
   font-family: var(--font-display);
+  overflow: hidden;
+  border: 4px solid #ffffff; /* White outer border */
 }
 
-.card-back {
-  background: radial-gradient(circle, #5b21b6 0%, #1e1b4b 100%);
-  border-color: #8b5cf6;
-  box-shadow: 0 0 15px rgba(139, 92, 246, 0.4);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.card-back-logo {
-  font-size: 1.6rem;
-  font-weight: 900;
-  color: #fff;
-  font-style: italic;
-  letter-spacing: 1px;
-  text-shadow: 0 0 10px #ff3b30, 0 0 20px #ffcc00;
-  transform: rotate(-20deg);
-}
-
-/* Color specific card modifiers */
+/* Card color backgrounds */
 .card.red {
-  border-color: var(--color-red);
-  color: var(--color-red);
-  box-shadow: var(--glow-red);
+  background-color: var(--color-red);
+  box-shadow: 0 0 10px rgba(255, 59, 48, 0.3);
 }
 
 .card.blue {
-  border-color: var(--color-blue);
-  color: var(--color-blue);
-  box-shadow: var(--glow-blue);
+  background-color: var(--color-blue);
+  box-shadow: 0 0 10px rgba(0, 122, 255, 0.3);
 }
 
 .card.green {
-  border-color: var(--color-green);
-  color: var(--color-green);
-  box-shadow: var(--glow-green);
+  background-color: var(--color-green);
+  box-shadow: 0 0 10px rgba(52, 199, 89, 0.3);
 }
 
 .card.yellow {
-  border-color: var(--color-yellow);
-  color: var(--color-yellow);
-  box-shadow: var(--glow-yellow);
+  background-color: var(--color-yellow);
+  box-shadow: 0 0 10px rgba(255, 204, 0, 0.3);
 }
 
 .card.wild {
-  border-color: #fff;
-  color: #fff;
-  background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
-  box-shadow: 0 0 15px rgba(255, 255, 255, 0.3);
+  background-color: #111111;
+  box-shadow: 0 0 12px rgba(255, 255, 255, 0.2);
 }
 
-/* Card corner symbols */
+/* Corner values */
+.card-top-left,
+.card-bottom-right {
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: #ffffff;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.6);
+  z-index: 10;
+}
+
 .card-top-left {
-  font-size: 0.9rem;
   align-self: flex-start;
 }
 
 .card-bottom-right {
-  font-size: 0.9rem;
   align-self: flex-end;
   transform: rotate(180deg);
 }
 
-/* Card central symbol */
-.card-center {
-  font-size: 2.2rem;
-  text-align: center;
+/* Center Oval */
+.card-oval {
   position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
+  top: 17%;
+  left: 8%;
+  width: 84%;
+  height: 66%;
+  background-color: #ffffff;
+  border-radius: 50%;
+  transform: rotate(-24deg);
   display: flex;
   align-items: center;
   justify-content: center;
+  box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.15), 0 2px 4px rgba(0, 0, 0, 0.25);
+  z-index: 5;
+  overflow: hidden;
 }
 
-.card.wild .card-center {
-  width: 50px;
-  height: 50px;
-  border-radius: 50%;
+/* Wild card oval Conic Gradient background */
+.card.wild .card-oval {
   background: conic-gradient(
     var(--color-red) 0% 25%, 
     var(--color-blue) 25% 50%, 
     var(--color-green) 50% 75%, 
     var(--color-yellow) 75% 100%
   );
-  box-shadow: 0 0 10px rgba(255,255,255,0.4);
+  box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.3), 0 3px 6px rgba(0,0,0,0.4);
+}
+
+/* Central Value/Symbol */
+.card-center-val {
+  font-size: 2.8rem;
+  font-weight: 900;
+  font-style: italic;
+  font-family: var(--font-display);
+  transform: rotate(24deg); /* Counter-rotate to stay upright */
+  user-select: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-shadow: 2px 2px 0 rgba(0,0,0,0.1);
+}
+
+.card.red .card-center-val { color: var(--color-red); }
+.card.blue .card-center-val { color: var(--color-blue); }
+.card.green .card-center-val { color: var(--color-green); }
+.card.yellow .card-center-val { color: var(--color-yellow); }
+
+/* Wild card central text outline */
+.card.wild .card-center-val {
+  color: #ffffff;
+  font-size: 2.3rem;
+  text-shadow: 
+    -2px -2px 0 #000,  
+     2px -2px 0 #000,
+    -2px  2px 0 #000,
+     2px  2px 0 #000,
+     2px  3px 5px rgba(0,0,0,0.5);
 }
 
 /* Playable Card highlights */
 .card.playable {
-  cursor: pointer;
-  animation: bounce-glow 2s infinite alternate;
-}
-
-.card.playable:hover {
-  transform: translateY(-20px) scale(1.15) !important;
-  z-index: 100;
-  box-shadow: 0 15px 30px rgba(255,255,255,0.2), 0 0 25px currentColor;
+  border-color: #ffffff;
 }
 
 /* Color Announcement Bar */

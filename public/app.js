@@ -586,7 +586,7 @@ function createCardElement(card, isPlayable, onClickHandler) {
     centerSymbol = '+2';
   } else if (card.value === 'wild') {
     symbol = '<i class="fa-solid fa-palette"></i>';
-    centerSymbol = '';
+    centerSymbol = 'W';
   } else if (card.value === 'draw4') {
     symbol = '+4';
     centerSymbol = '+4';
@@ -594,7 +594,9 @@ function createCardElement(card, isPlayable, onClickHandler) {
 
   cardDiv.innerHTML = `
     <div class="card-top-left">${symbol}</div>
-    <div class="card-center">${centerSymbol}</div>
+    <div class="card-oval">
+      <div class="card-center-val">${centerSymbol}</div>
+    </div>
     <div class="card-bottom-right">${symbol}</div>
   `;
 
