@@ -8,6 +8,7 @@ let currentRoom = null;
 let currentGameState = null;
 let hasDrawnCardThisTurn = false;
 let pendingWildCardId = null; // Stores cardId while picking color
+let localGameStarted = false; // Tracks game transition to active state
 
 // Audio elements
 const sounds = {
@@ -298,8 +299,24 @@ function bindSocketEvents() {
   });
 
   socket.on('gameStateUpdate', (state) => {
+    // Detect transitions from lobby -> active game
+    const justStarted = state.gameStarted && !localGameStarted;
+    localGameStarted = state.gameStarted;
+
     currentGameState = state;
     console.log('State updated:', state);
+
+    // If game has just started, play a realistic staggered deal sound effect
+    if (justStarted) {
+      let dealSoundCount = 0;
+      const dealSoundInterval = setInterval(() => {
+        playSound('deal');
+        dealSoundCount++;
+        if (dealSoundCount >= 7) {
+          clearInterval(dealSoundInterval);
+        }
+      }, 150);
+    }
 
     // If game is not started, we are in the waiting lobby
     if (!state.gameStarted) {
@@ -454,7 +471,7 @@ function bindSocketEvents() {
     if (mySelf) {
       handCardsCount.innerText = mySelf.hand.length;
 
-      mySelf.hand.forEach(card => {
+      mySelf.hand.forEach((card, idx) => {
         const isPlayable = isMyTurn && (
           card.color === 'wild' ||
           card.color === state.currentSelectedColor ||
@@ -471,6 +488,13 @@ function bindSocketEvents() {
             socket.emit('playCard', { cardId: card.id, wildColor: null });
           }
         });
+
+        // Set staggered deal animation delays when game starts
+        if (justStarted) {
+          cardEl.style.animationDelay = `${idx * 150}ms`;
+        } else {
+          cardEl.style.animation = 'none'; // Instant draw/play during turns
+        }
 
         playerHand.appendChild(cardEl);
       });
@@ -579,17 +603,29 @@ function createCardElement(card, isPlayable, onClickHandler) {
     symbol = '<i class="fa-solid fa-ban"></i>';
     centerSymbol = '<i class="fa-solid fa-ban"></i>';
   } else if (card.value === 'reverse') {
-    symbol = '<i class="fa-solid fa-arrows-rotate"></i>';
-    centerSymbol = '<i class="fa-solid fa-arrows-rotate"></i>';
+    symbol = '<i class="fa-solid fa-arrows-up-down" style="transform: rotate(45deg);"></i>';
+    centerSymbol = '<i class="fa-solid fa-arrows-up-down" style="transform: rotate(45deg);"></i>';
   } else if (card.value === 'draw2') {
     symbol = '+2';
-    centerSymbol = '+2';
+    centerSymbol = `
+      <div class="mini-cards-draw2">
+        <div class="mini-card-shape"></div>
+        <div class="mini-card-shape"></div>
+      </div>
+    `;
   } else if (card.value === 'wild') {
-    symbol = '<i class="fa-solid fa-palette"></i>';
-    centerSymbol = 'W';
+    symbol = '<div class="mini-wild-oval"></div>';
+    centerSymbol = ''; // Wild card center oval is conic-gradient only
   } else if (card.value === 'draw4') {
     symbol = '+4';
-    centerSymbol = '+4';
+    centerSymbol = `
+      <div class="draw4-cards-container">
+        <div class="draw4-card-shape red"></div>
+        <div class="draw4-card-shape blue"></div>
+        <div class="draw4-card-shape green"></div>
+        <div class="draw4-card-shape yellow"></div>
+      </div>
+    `;
   }
 
   cardDiv.innerHTML = `

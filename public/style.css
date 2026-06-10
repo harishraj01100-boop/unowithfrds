@@ -757,54 +757,55 @@ body {
 .card {
   width: var(--card-width);
   height: var(--card-height);
-  border-radius: 10px;
+  border-radius: 8px;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  padding: 0.4rem;
+  padding: 0.35rem 0.45rem;
   position: relative;
-  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 5px 12px rgba(0, 0, 0, 0.45);
   transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
   user-select: none;
   font-family: var(--font-display);
   overflow: hidden;
-  border: 4px solid #ffffff; /* White outer border */
+  border: 4px solid #ffffff; /* iconic thick white border */
+  outline: 1.5px solid rgba(0, 0, 0, 0.2);
+  outline-offset: -3px;
+  background-clip: padding-box;
 }
 
 /* Card color backgrounds */
 .card.red {
   background-color: var(--color-red);
-  box-shadow: 0 0 10px rgba(255, 59, 48, 0.3);
 }
 
 .card.blue {
   background-color: var(--color-blue);
-  box-shadow: 0 0 10px rgba(0, 122, 255, 0.3);
 }
 
 .card.green {
   background-color: var(--color-green);
-  box-shadow: 0 0 10px rgba(52, 199, 89, 0.3);
 }
 
 .card.yellow {
   background-color: var(--color-yellow);
-  box-shadow: 0 0 10px rgba(255, 204, 0, 0.3);
 }
 
 .card.wild {
-  background-color: #111111;
-  box-shadow: 0 0 12px rgba(255, 255, 255, 0.2);
+  background-color: #000000; /* Wild cards have black backgrounds */
 }
 
-/* Corner values */
+/* Corner symbols */
 .card-top-left,
 .card-bottom-right {
-  font-size: 0.95rem;
+  font-size: 0.9rem;
   font-weight: 800;
   color: #ffffff;
-  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.6);
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
   z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .card-top-left {
@@ -816,25 +817,31 @@ body {
   transform: rotate(180deg);
 }
 
-/* Center Oval */
+/* Large Center Oval */
 .card-oval {
   position: absolute;
-  top: 17%;
-  left: 8%;
-  width: 84%;
-  height: 66%;
-  background-color: #ffffff;
+  top: 15%;
+  left: 6%;
+  width: 88%;
+  height: 70%;
   border-radius: 50%;
-  transform: rotate(-24deg);
+  transform: rotate(-22deg);
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.15), 0 2px 4px rgba(0, 0, 0, 0.25);
+  border: 3.5px solid #ffffff; /* White outline for the oval */
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.25);
   z-index: 5;
   overflow: hidden;
 }
 
-/* Wild card oval Conic Gradient background */
+/* Center oval colors matching the card color */
+.card.red .card-oval { background-color: var(--color-red); }
+.card.blue .card-oval { background-color: var(--color-blue); }
+.card.green .card-oval { background-color: var(--color-green); }
+.card.yellow .card-oval { background-color: var(--color-yellow); }
+
+/* Wild card center oval is 4-color split */
 .card.wild .card-oval {
   background: conic-gradient(
     var(--color-red) 0% 25%, 
@@ -842,43 +849,168 @@ body {
     var(--color-green) 50% 75%, 
     var(--color-yellow) 75% 100%
   );
-  box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.3), 0 3px 6px rgba(0,0,0,0.4);
+  border: 3.5px solid #ffffff;
+  box-shadow: inset 0 0 10px rgba(0,0,0,0.3);
 }
 
-/* Central Value/Symbol */
+/* Central Symbol inside the Oval */
 .card-center-val {
   font-size: 2.8rem;
   font-weight: 900;
   font-style: italic;
   font-family: var(--font-display);
-  transform: rotate(24deg); /* Counter-rotate to stay upright */
+  color: #ffffff; /* Value is white */
+  transform: rotate(22deg); /* Straighten */
   user-select: none;
   display: flex;
   align-items: center;
   justify-content: center;
-  text-shadow: 2px 2px 0 rgba(0,0,0,0.1);
+  text-shadow: 2px 3px 0px rgba(0, 0, 0, 0.35); /* Black drop shadow */
 }
 
-.card.red .card-center-val { color: var(--color-red); }
-.card.blue .card-center-val { color: var(--color-blue); }
-.card.green .card-center-val { color: var(--color-green); }
-.card.yellow .card-center-val { color: var(--color-yellow); }
-
-/* Wild card central text outline */
-.card.wild .card-center-val {
-  color: #ffffff;
-  font-size: 2.3rem;
-  text-shadow: 
-    -2px -2px 0 #000,  
-     2px -2px 0 #000,
-    -2px  2px 0 #000,
-     2px  2px 0 #000,
-     2px  3px 5px rgba(0,0,0,0.5);
+/* Action Symbol Specifics in center */
+.card-center-val i {
+  font-size: 2.2rem;
+  text-shadow: 2px 3px 0px rgba(0, 0, 0, 0.35);
 }
 
-/* Playable Card highlights */
+/* Mini Draw 2 Cards inside center oval */
+.mini-cards-draw2 {
+  position: relative;
+  width: 45px;
+  height: 40px;
+  transform: rotate(22deg); /* Straighten */
+}
+
+.mini-cards-draw2 .mini-card-shape {
+  position: absolute;
+  width: 20px;
+  height: 32px;
+  background-color: #ffffff;
+  border-radius: 3px;
+  border: 2.5px solid #ffffff;
+  box-shadow: 1.5px 1.5px 3px rgba(0, 0, 0, 0.35);
+}
+
+/* Draw 2 card colors inherit */
+.card.red .mini-card-shape { outline: 2px solid var(--color-red); }
+.card.blue .mini-card-shape { outline: 2px solid var(--color-blue); }
+.card.green .mini-card-shape { outline: 2px solid var(--color-green); }
+.card.yellow .mini-card-shape { outline: 2px solid var(--color-yellow); }
+
+.mini-cards-draw2 .mini-card-shape:nth-child(1) {
+  left: 4px;
+  top: 6px;
+  transform: rotate(-12deg);
+}
+
+.mini-cards-draw2 .mini-card-shape:nth-child(2) {
+  left: 19px;
+  top: 1px;
+  transform: rotate(10deg);
+}
+
+/* Mini wild oval for corner symbols */
+.mini-wild-oval {
+  width: 14px;
+  height: 20px;
+  border-radius: 50%;
+  border: 1.5px solid #ffffff;
+  background: conic-gradient(
+    var(--color-red) 0% 25%, 
+    var(--color-blue) 25% 50%, 
+    var(--color-green) 50% 75%, 
+    var(--color-yellow) 75% 100%
+  );
+  box-shadow: 0 1px 2px rgba(0,0,0,0.3);
+}
+
+/* Draw 4 Cards inside wild oval */
+.draw4-cards-container {
+  position: relative;
+  width: 50px;
+  height: 42px;
+  transform: rotate(22deg); /* Straighten */
+}
+
+.draw4-card-shape {
+  position: absolute;
+  width: 17px;
+  height: 26px;
+  border-radius: 2.5px;
+  border: 1.5px solid #ffffff;
+  box-shadow: 1px 1px 3px rgba(0, 0, 0, 0.4);
+}
+
+.draw4-card-shape.red { background-color: var(--color-red); left: 2px; top: 12px; transform: rotate(-15deg); z-index: 1; }
+.draw4-card-shape.blue { background-color: var(--color-blue); left: 11px; top: 2px; transform: rotate(-5deg); z-index: 2; }
+.draw4-card-shape.green { background-color: var(--color-green); left: 20px; top: 6px; transform: rotate(10deg); z-index: 3; }
+.draw4-card-shape.yellow { background-color: var(--color-yellow); left: 28px; top: 14px; transform: rotate(20deg); z-index: 4; }
+
+/* Playable highlights */
 .card.playable {
+  cursor: pointer;
+  animation: bounce-glow-playable 2s infinite alternate;
+}
+
+.card.playable:hover {
+  transform: translateY(-25px) scale(1.15) !important;
+  z-index: 100;
+  box-shadow: 0 15px 30px rgba(255,255,255,0.25), 0 0 20px #ffffff;
+}
+
+/* Staggered deal animation */
+.player-hand .card {
+  animation: deal-card 0.55s cubic-bezier(0.175, 0.885, 0.32, 1.2) both;
+}
+
+@keyframes deal-card {
+  0% {
+    transform: translateY(-280px) translateX(120px) rotate(-45deg) scale(0.2);
+    opacity: 0;
+  }
+  100% {
+    transform: translateY(0) translateX(0) rotate(0deg) scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes bounce-glow-playable {
+  from {
+    box-shadow: 0 5px 12px rgba(0,0,0,0.45);
+    border-color: #ffffff;
+  }
+  to {
+    box-shadow: 0 8px 18px rgba(255, 255, 255, 0.3), 0 0 15px #ffffff;
+    border-color: #f8fafc;
+  }
+}
+
+/* Card Back Styles */
+.card-back {
+  background: radial-gradient(circle, #ff1e00 0%, #a30000 100%);
   border-color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  outline: 1.5px solid rgba(0, 0, 0, 0.2);
+  outline-offset: -3px;
+}
+
+.card-back-logo {
+  font-size: 1.6rem;
+  font-weight: 900;
+  color: #ffcc00;
+  font-style: italic;
+  letter-spacing: 1.5px;
+  text-shadow: 
+    -2.5px -2.5px 0 #000,  
+     2.5px -2.5px 0 #000,
+    -2.5px  2.5px 0 #000,
+     2.5px  2.5px 0 #000,
+     0px 4px 6px rgba(0,0,0,0.5);
+  transform: rotate(-22deg) scaleX(1.3);
+  font-family: var(--font-display);
 }
 
 /* Color Announcement Bar */
