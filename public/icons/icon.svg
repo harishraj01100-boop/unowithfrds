@@ -1,0 +1,55 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <!-- Definitions for gradients and shadows -->
+  <defs>
+    <!-- Background Gradient -->
+    <radialGradient id="bg-grad" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#1e1b4b" />
+      <stop offset="100%" stop-color="#070a13" />
+    </radialGradient>
+
+    <!-- Card 1 (Red) Glow -->
+    <filter id="glow-red" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="10" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+
+    <!-- Card 2 (Green) Glow -->
+    <filter id="glow-green" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="12" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+  </defs>
+
+  <!-- Background base -->
+  <rect width="512" height="512" rx="128" fill="url(#bg-grad)" />
+  <circle cx="256" cy="256" r="230" fill="none" stroke="#ffffff" stroke-opacity="0.05" stroke-width="4" />
+
+  <!-- Card 1: Red Card (Rotated Left) -->
+  <g transform="translate(180, 240) rotate(-18)">
+    <!-- Glow Outline -->
+    <rect x="-70" y="-110" width="140" height="220" rx="18" fill="#0f172a" stroke="#ff3b30" stroke-width="6" filter="url(#glow-red)" />
+    <!-- Inner Card Value -->
+    <circle cx="0" cy="0" r="35" fill="none" stroke="#ff3b30" stroke-width="4" stroke-dasharray="10 4" />
+    <text x="0" y="14" font-family="'Space Grotesk', sans-serif" font-size="48" font-weight="900" fill="#ff3b30" text-anchor="middle">U</text>
+    <!-- Corner Symbols -->
+    <text x="-52" y="-85" font-family="'Space Grotesk', sans-serif" font-size="20" font-weight="800" fill="#ff3b30" text-anchor="middle">U</text>
+    <text x="52" y="98" font-family="'Space Grotesk', sans-serif" font-size="20" font-weight="800" fill="#ff3b30" text-anchor="middle" transform="rotate(180 52 90)">U</text>
+  </g>
+
+  <!-- Card 2: Green Card (Rotated Right) -->
+  <g transform="translate(320, 260) rotate(15)">
+    <!-- Glow Outline -->
+    <rect x="-70" y="-110" width="140" height="220" rx="18" fill="#0f172a" stroke="#34c759" stroke-width="6" filter="url(#glow-green)" />
+    <!-- Inner Card Value -->
+    <circle cx="0" cy="0" r="35" fill="none" stroke="#34c759" stroke-width="4" stroke-dasharray="8 3" />
+    <text x="0" y="16" font-family="'Space Grotesk', sans-serif" font-size="48" font-weight="900" fill="#34c759" text-anchor="middle">A</text>
+    <!-- Corner Symbols -->
+    <text x="-52" y="-85" font-family="'Space Grotesk', sans-serif" font-size="20" font-weight="800" fill="#34c759" text-anchor="middle">A</text>
+    <text x="52" y="98" font-family="'Space Grotesk', sans-serif" font-size="20" font-weight="800" fill="#34c759" text-anchor="middle" transform="rotate(180 52 90)">A</text>
+  </g>
+
+  <!-- Banner text at the bottom -->
+  <text x="256" y="440" font-family="'Space Grotesk', sans-serif" font-size="34" font-weight="800" fill="#ffffff" letter-spacing="4" text-anchor="middle">
+    UNO <tspan fill="#22c55e">ARENA</tspan>
+  </text>
+</svg>

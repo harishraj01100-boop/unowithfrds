@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>UNO ARENA | Multiplayer Real-Time Card Game</title>
+  <!-- SEO Meta Tags -->
+  <meta name="description" content="Play UNO online with friends! UNO ARENA features a dark neon styling, real-time multiplayer lobby, chat, and standard rule actions. Playable on desktop & mobile.">
+  <meta name="theme-color" content="#0f172a">
+  
+  <!-- PWA Manifest & Apple Touch -->
+  <link rel="manifest" href="/manifest.json">
+  <link rel="apple-touch-icon" href="/icons/icon.svg">
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+  
+  <!-- FontAwesome for Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <!-- Custom Styles -->
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- Background Glows -->
+  <div class="bg-glow-1"></div>
+  <div class="bg-glow-2"></div>
+
+  <!-- Main Container -->
+  <main class="app-container">
+    
+    <!-- HEADER -->
+    <header class="app-header">
+      <h1 class="logo-text">UNO <span class="accent-text">ARENA</span></h1>
+    </header>
+
+    <!-- SCREEN 1: LOBBY -->
+    <section id="lobby-screen" class="view-panel active">
+      <div class="panel-header">
+        <h2>Enter the Arena</h2>
+        <p>Create a private room or join an existing game room</p>
+      </div>
+      
+      <div class="form-group">
+        <label for="player-name-input">Your Name</label>
+        <div class="input-wrapper">
+          <i class="fa-solid fa-user input-icon"></i>
+          <input type="text" id="player-name-input" placeholder="e.g. Harish" maxlength="12" autocomplete="off">
+        </div>
+      </div>
+
+      <hr class="separator">
+
+      <div class="lobby-actions">
+        <!-- Create Room Column -->
+        <div class="action-card">
+          <h3>Create a New Room</h3>
+          <p>Start a new game session and invite your friends</p>
+          <button id="create-room-btn" class="btn btn-primary btn-glow">
+            <i class="fa-solid fa-plus-circle"></i> Create Room
+          </button>
+        </div>
+
+        <!-- Join Room Column -->
+        <div class="action-card">
+          <h3>Join Existing Room</h3>
+          <p>Enter a 6-character room code to join</p>
+          <div class="form-group">
+            <div class="input-wrapper">
+              <i class="fa-solid fa-key input-icon"></i>
+              <input type="text" id="room-code-input" placeholder="e.g. A7K9P2" maxlength="6" autocomplete="off" style="text-transform: uppercase;">
+            </div>
+          </div>
+          <button id="join-room-btn" class="btn btn-accent btn-glow">
+            <i class="fa-solid fa-sign-in-alt"></i> Join Room
+          </button>
+        </div>
+      </div>
+
+      <hr class="separator">
+
+      <!-- Dynamic Backend Server Settings -->
+      <div class="backend-settings-row">
+        <button id="toggle-backend-settings-btn" class="btn btn-secondary btn-sm" style="font-size:0.8rem; padding: 0.5rem 1rem;">
+          <i class="fa-solid fa-gears"></i> Server Settings
+        </button>
+        <span id="connection-status-badge" class="connection-status connecting">
+          <span class="status-dot"></span> <span id="connection-status-text">Server: Connecting...</span>
+        </span>
+      </div>
+
+      <div id="backend-settings-panel" class="backend-settings-panel hidden" style="margin-top: 1rem; text-align: left;">
+        <div class="form-group">
+          <label for="backend-url-input">Render Backend Server URL</label>
+          <div class="input-wrapper" style="display:flex; gap:0.5rem; width:100%;">
+            <div style="flex:1; position:relative; display:flex; align-items:center;">
+              <i class="fa-solid fa-server input-icon"></i>
+              <input type="text" id="backend-url-input" placeholder="e.g. https://uno-arena-backend.onrender.com" autocomplete="off" style="padding: 0.8rem 1rem 0.8rem 2.7rem;">
+            </div>
+            <button id="save-backend-url-btn" class="btn btn-accent btn-sm" style="text-transform: none; padding: 0.5rem 1.25rem; font-size:0.85rem;">Connect</button>
+          </div>
+          <span class="hand-hint" style="margin-top: 0.4rem; display:block;">
+            Leave empty to connect to the current site origin. URL will be saved locally.
+          </span>
+        </div>
+      </div>
+    </section>
+
+
+    <!-- SCREEN 2: WAITING ROOM -->
+    <section id="waiting-screen" class="view-panel">
+      <div class="waiting-layout">
+        <!-- Lobby Details -->
+        <div class="waiting-details">
+          <div class="panel-header">
+            <h2>Lobby Waiting Area</h2>
+            <p>Share code with friends. (2-4 players required)</p>
+          </div>
+
+          <div class="code-share-block">
+            <span class="code-label">ROOM CODE</span>
+            <div class="code-display">
+              <span id="lobby-room-code">-</span>
+              <button id="copy-code-btn" class="btn-icon" title="Copy Room Code">
+                <i class="fa-solid fa-copy"></i>
+              </button>
+            </div>
+          </div>
+
+          <div class="players-list-section">
+            <h3>Players Joined (<span id="players-count">0</span>/4)</h3>
+            <ul id="lobby-players-list" class="players-list">
+              <!-- Dynamically populated -->
+            </ul>
+          </div>
+
+          <div class="waiting-controls">
+            <!-- Only visible to host -->
+            <button id="start-game-btn" class="btn btn-success btn-glow hidden">
+              <i class="fa-solid fa-play"></i> START GAME
+            </button>
+            <span id="non-host-message" class="waiting-status-msg">Waiting for host to start the game...</span>
+            <button id="leave-room-btn" class="btn btn-danger">
+              <i class="fa-solid fa-arrow-left"></i> Leave Room
+            </button>
+          </div>
+        </div>
+
+        <!-- Shared Chat Panel (Visible in Lobby + Game) -->
+        <div class="chat-container">
+          <div class="chat-header">
+            <h3><i class="fa-solid fa-comments"></i> Chat Box</h3>
+          </div>
+          <div id="chat-messages" class="chat-messages">
+            <!-- Message entries -->
+          </div>
+          <form id="chat-form" class="chat-form">
+            <input type="text" id="chat-input" placeholder="Type a message..." maxlength="150" autocomplete="off">
+            <button type="submit" class="btn-chat-send">
+              <i class="fa-solid fa-paper-plane"></i>
+            </button>
+          </form>
+        </div>
+      </div>
+    </section>
+
+    <!-- SCREEN 3: GAMEPLAY BOARD -->
+    <section id="game-screen" class="view-panel">
+      <!-- Game layout wrapper -->
+      <div class="game-layout">
+        
+        <!-- Sidebar: Player List during Gameplay -->
+        <div class="game-sidebar">
+          <div class="sidebar-section">
+            <h3>Players</h3>
+            <ul id="game-players-list" class="game-players-list">
+              <!-- Active players stats, card count, turn indicators -->
+            </ul>
+          </div>
+          
+          <!-- Collapsible Chat for gameplay mode -->
+          <div class="sidebar-chat-wrapper">
+            <!-- We will append the chat container here dynamically in JS for widescreen support, or use flex layouts -->
+            <div id="game-chat-placeholder"></div>
+          </div>
+        </div>
+
+        <!-- Central Arena Grid -->
+        <div class="game-table-area">
+          <!-- Turn Banner & Direction Indicator -->
+          <div class="game-status-banner">
+            <div class="turn-announcement">
+              <span id="turn-indicator-text">Current Turn: <b id="active-player-name">-</b></span>
+            </div>
+            <div class="game-direction-indicator" id="direction-indicator" title="Current Rotation Direction">
+              <i class="fa-solid fa-arrows-rotate rotation-clockwise" id="direction-icon"></i>
+              <span id="direction-text">Clockwise</span>
+            </div>
+          </div>
+
+          <!-- Central Card piles -->
+          <div class="table-center-decks">
+            
+            <!-- Draw Pile (Face Down) -->
+            <div class="deck-pile draw-pile" id="deck-draw-pile">
+              <div class="card card-back">
+                <div class="card-back-logo">UNO</div>
+              </div>
+              <div class="pile-badge shadow-glow">
+                <span id="deck-cards-count">108</span> cards
+              </div>
+              <span class="pile-label">DRAW</span>
+            </div>
+
+            <!-- Discard Pile (Face Up) -->
+            <div class="deck-pile discard-pile" id="deck-discard-pile">
+              <!-- Dynamically rendered card here -->
+              <span class="pile-label">DISCARD</span>
+            </div>
+
+          </div>
+
+          <!-- Selected Color Glow and Info -->
+          <div class="color-announcement" id="color-announcement-bar">
+            <span>Active Suit Color: </span>
+            <span id="active-color-name" class="color-text-red">RED</span>
+          </div>
+
+          <!-- Bottom Control Bar & Player Deck -->
+          <div class="player-hud">
+            
+            <!-- Turn Actions -->
+            <div class="hud-controls">
+              <button id="game-uno-btn" class="btn btn-uno shadow-glow" title="Call UNO when you have 1 card left!">
+                UNO!
+              </button>
+              <button id="game-pass-btn" class="btn btn-secondary" disabled>
+                Pass Turn
+              </button>
+            </div>
+
+            <!-- Player Hand Dock -->
+            <div class="player-hand-section">
+              <div class="hand-header">
+                <h3>Your Hand (<span id="hand-cards-count">0</span> cards)</h3>
+                <span class="hand-hint">Select a glowing card to play it</span>
+              </div>
+              <div class="hand-scroll-container">
+                <div id="player-hand" class="player-hand">
+                  <!-- Hand cards will slide in here -->
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+  </main>
+
+  <!-- MODAL 1: COLOR PICKER (FOR WILD CARDS) -->
+  <div id="color-picker-modal" class="modal-overlay">
+    <div class="modal-content color-picker-content">
+      <h2>Choose Wild Card Color</h2>
+      <p>Select a color to set the active suit</p>
+      <div class="color-wheel">
+        <button class="color-slice red" data-color="red" title="Red"></button>
+        <button class="color-slice blue" data-color="blue" title="Blue"></button>
+        <button class="color-slice green" data-color="green" title="Green"></button>
+        <button class="color-slice yellow" data-color="yellow" title="Yellow"></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL 2: GAME OVER / LEADERBOARD -->
+  <div id="leaderboard-modal" class="modal-overlay">
+    <div class="modal-content leaderboard-content">
+      <div class="trophy-header">
+        <i class="fa-solid fa-trophy trophy-glow"></i>
+        <h2>Victory Standings!</h2>
+      </div>
+      
+      <div class="leaderboard-standings">
+        <ol id="leaderboard-list">
+          <!-- Dynamically populated list -->
+        </ol>
+      </div>
+
+      <div class="modal-actions">
+        <button id="restart-lobby-btn" class="btn btn-success hidden">
+          <i class="fa-solid fa-rotate-left"></i> Return to Lobby
+        </button>
+        <span id="non-host-restart-msg" class="restart-status-msg">Waiting for host to restart or return to lobby...</span>
+        <button id="quit-game-btn" class="btn btn-danger">
+          <i class="fa-solid fa-door-open"></i> Quit Game
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- AUDIO ELEMENTS FOR GAME SOUNDS -->
+  <audio id="sound-deal" src="https://assets.mixkit.co/active_storage/sfx/2019/2019-84.wav" preload="auto"></audio>
+  <audio id="sound-play" src="https://assets.mixkit.co/active_storage/sfx/1004/1004-84.wav" preload="auto"></audio>
+  <audio id="sound-draw" src="https://assets.mixkit.co/active_storage/sfx/2006/2006-84.wav" preload="auto"></audio>
+  <audio id="sound-uno" src="https://assets.mixkit.co/active_storage/sfx/1435/1435-84.wav" preload="auto"></audio>
+  <audio id="sound-penalty" src="https://assets.mixkit.co/active_storage/sfx/2501/2501-84.wav" preload="auto"></audio>
+  <audio id="sound-win" src="https://assets.mixkit.co/active_storage/sfx/1917/1917-84.wav" preload="auto"></audio>
+
+  <!-- PWA Install Banner (Subtle inline banner) -->
+  <div id="pwa-install-banner" class="pwa-banner hidden">
+    <div class="pwa-banner-content">
+      <i class="fa-solid fa-mobile-screen-button"></i>
+      <span>Install UNO ARENA to your home screen!</span>
+    </div>
+    <div class="pwa-banner-actions">
+      <button id="pwa-install-btn" class="btn btn-accent btn-sm">Install</button>
+      <button id="pwa-close-btn" class="btn-icon-sm"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+  </div>
+
+  <!-- Socket.IO and Frontend App Logic -->
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
