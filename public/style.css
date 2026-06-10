@@ -161,6 +161,8 @@ body {
   box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
   animation: fadeIn 0.4s ease-out;
   overflow: hidden;
+  min-width: 0;
+  width: 100%;
 }
 
 .view-panel.active {
@@ -592,6 +594,8 @@ body {
   grid-template-columns: 280px minmax(0, 1fr);
   gap: 1.5rem;
   height: 100%;
+  min-width: 0;
+  width: 100%;
 }
 
 .game-sidebar {
@@ -1484,6 +1488,8 @@ body {
     grid-template-columns: minmax(0, 1fr);
     grid-template-rows: auto 1fr;
     gap: 1rem;
+    min-width: 0;
+    width: 100%;
   }
 
   .game-sidebar {
@@ -1494,6 +1500,8 @@ body {
     flex-direction: row;
     justify-content: space-between;
     align-items: center;
+    min-width: 0;
+    width: 100%;
   }
 
   .sidebar-section {
@@ -1606,6 +1614,8 @@ body {
 
   .view-panel {
     padding: 1rem;
+    min-width: 0;
+    width: 100%;
   }
 
   .panel-header h2 {

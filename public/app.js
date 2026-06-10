@@ -21,7 +21,8 @@ const sounds = {
   penalty: document.getElementById('sound-penalty'),
   win: document.getElementById('sound-win'),
   shuffle: document.getElementById('sound-shuffle'),
-  catch: document.getElementById('sound-catch')
+  catch: document.getElementById('sound-catch'),
+  unoAlert: document.getElementById('sound-uno-alert')
 };
 
 // Helper: Play sound safely
@@ -43,6 +44,37 @@ function triggerVibrate(pattern = 100) {
     }
   }
 }
+
+// Mobile Audio/Vibration Unlocker
+function unlockAudio() {
+  console.log('User gesture detected. Unlocking audio/vibration APIs...');
+  
+  // Unlock all sound elements by doing a play/pause cycle
+  Object.values(sounds).forEach(audioEl => {
+    if (audioEl) {
+      const playPromise = audioEl.play();
+      if (playPromise !== undefined) {
+        playPromise.then(() => {
+          audioEl.pause();
+          audioEl.currentTime = 0;
+        }).catch(err => {
+          console.log('Pre-unlock sound play deferred:', err.message);
+        });
+      }
+    }
+  });
+
+  // Unlock vibration API on mobile browsers
+  triggerVibrate(10);
+
+  // Clean up event listeners so it only runs once
+  document.removeEventListener('click', unlockAudio);
+  document.removeEventListener('touchstart', unlockAudio);
+}
+
+// Bind mobile browser unlockers
+document.addEventListener('click', unlockAudio);
+document.addEventListener('touchstart', unlockAudio);
 
 // DOM Elements - Screens
 const lobbyScreen = document.getElementById('lobby-screen');
@@ -650,8 +682,8 @@ gamePassBtn.addEventListener('click', () => {
 
 // Call UNO
 gameUnoBtn.addEventListener('click', () => {
-  playSound('uno');
-  triggerVibrate(120);
+  playSound('unoAlert');
+  triggerVibrate(150);
   socket.emit('declareUno');
 });
 
