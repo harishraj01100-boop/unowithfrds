@@ -46,35 +46,35 @@ function triggerVibrate(pattern = 100) {
 }
 
 // Mobile Audio/Vibration Unlocker
+let audioUnlocked = false;
+
 function unlockAudio() {
+  if (audioUnlocked) return;
   console.log('User gesture detected. Unlocking audio/vibration APIs...');
   
-  // Unlock all sound elements by doing a play/pause cycle
-  Object.values(sounds).forEach(audioEl => {
-    if (audioEl) {
-      const playPromise = audioEl.play();
-      if (playPromise !== undefined) {
-        playPromise.then(() => {
-          audioEl.pause();
-          audioEl.currentTime = 0;
-        }).catch(err => {
-          console.log('Pre-unlock sound play deferred:', err.message);
-        });
-      }
-    }
-  });
+  // Play a single short sound (the play/tap sound) to unlock page-wide media playback
+  if (sounds.play) {
+    sounds.play.play()
+      .then(() => {
+        audioUnlocked = true;
+        console.log('Audio context successfully unlocked using tap sound!');
+        
+        // Remove event listeners once unlocked
+        document.removeEventListener('click', unlockAudio);
+        document.removeEventListener('touchend', unlockAudio);
+      })
+      .catch(err => {
+        console.log('Audio unlock failed, will retry on next interaction:', err.message);
+      });
+  }
 
   // Unlock vibration API on mobile browsers
   triggerVibrate(10);
-
-  // Clean up event listeners so it only runs once
-  document.removeEventListener('click', unlockAudio);
-  document.removeEventListener('touchstart', unlockAudio);
 }
 
-// Bind mobile browser unlockers
+// Bind mobile browser unlockers (click and touchend are recognized gestures, touchstart is not)
 document.addEventListener('click', unlockAudio);
-document.addEventListener('touchstart', unlockAudio);
+document.addEventListener('touchend', unlockAudio);
 
 // DOM Elements - Screens
 const lobbyScreen = document.getElementById('lobby-screen');

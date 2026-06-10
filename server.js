@@ -102,20 +102,27 @@ function drawCardFromDeck(room, count = 1) {
   return drawn;
 }
 
-// Helper: Get next turn index
+// Helper: Get next turn index by stepping through active players
 function getNextTurnIndex(room, offset = 1) {
   const numPlayers = room.players.length;
-  let nextIndex = room.turnIndex;
+  let currentIndex = room.turnIndex;
 
-  // Search for the next player who has not finished
-  for (let i = 0; i < numPlayers; i++) {
-    nextIndex = (nextIndex + offset * room.direction + numPlayers) % numPlayers;
-    const player = room.players[nextIndex];
-    if (player.hand.length > 0) {
-      return nextIndex;
+  // Step 'offset' times through active players
+  for (let step = 0; step < offset; step++) {
+    let found = false;
+    // Search one-by-one in the direction to find the next active player
+    for (let i = 0; i < numPlayers; i++) {
+      currentIndex = (currentIndex + room.direction + numPlayers) % numPlayers;
+      if (room.players[currentIndex].hand.length > 0) {
+        found = true;
+        break; // found the next active player for this step
+      }
+    }
+    if (!found) {
+      return room.turnIndex; // Default fallback if no active player
     }
   }
-  return room.turnIndex; // Default callback fallback
+  return currentIndex;
 }
 
 // Helper: Check if the game is finished
