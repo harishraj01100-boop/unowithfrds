@@ -35,6 +35,9 @@
     <!-- HEADER -->
     <header class="app-header">
       <h1 class="logo-text">UNO <span class="accent-text">ARENA</span></h1>
+      <button id="sound-toggle-btn" class="sound-toggle-btn" title="Toggle Sound">
+        <i class="fa-solid fa-volume-high"></i>
+      </button>
     </header>
 
     <!-- SCREEN 1: LOBBY -->
@@ -343,6 +346,8 @@
   <audio id="sound-uno" src="https://assets.mixkit.co/active_storage/sfx/1435/1435-84.wav" preload="auto"></audio>
   <audio id="sound-penalty" src="https://assets.mixkit.co/active_storage/sfx/2501/2501-84.wav" preload="auto"></audio>
   <audio id="sound-win" src="https://assets.mixkit.co/active_storage/sfx/1917/1917-84.wav" preload="auto"></audio>
+  <audio id="sound-shuffle" src="https://www.orangefreesounds.com/wp-content/uploads/2019/09/Shuffling-cards.mp3" preload="auto"></audio>
+  <audio id="sound-catch" src="https://assets.mixkit.co/active_storage/sfx/2568/2568-84.wav" preload="auto"></audio>
 
   <!-- Socket.IO and Frontend App Logic -->
   <script src="/socket.io/socket.io.js"></script>

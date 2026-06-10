@@ -92,6 +92,45 @@ body {
 .app-header {
   text-align: center;
   margin-bottom: 1rem;
+  position: relative;
+}
+
+.sound-toggle-btn {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border-glass);
+  color: #fff;
+  font-size: 1.2rem;
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.25s ease;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+  position: absolute;
+  top: 50%;
+  right: 1.5rem;
+  transform: translateY(-50%);
+  z-index: 100;
+}
+
+.sound-toggle-btn:hover {
+  background: rgba(255, 255, 255, 0.15);
+  border-color: var(--border-neon-green);
+  box-shadow: 0 0 12px rgba(34, 197, 94, 0.4);
+  transform: translateY(-50%) scale(1.08);
+}
+
+.sound-toggle-btn.muted {
+  color: var(--text-muted);
+  border-color: rgba(255, 255, 255, 0.04);
+}
+
+.sound-toggle-btn.muted:hover {
+  border-color: #ef4444;
+  box-shadow: 0 0 12px rgba(239, 68, 68, 0.4);
 }
 
 .logo-text {
@@ -550,7 +589,7 @@ body {
 /* --- Screen 3: Gameplay Board Layout --- */
 .game-layout {
   display: grid;
-  grid-template-columns: 280px 1fr;
+  grid-template-columns: 280px minmax(0, 1fr);
   gap: 1.5rem;
   height: 100%;
 }
@@ -661,6 +700,7 @@ body {
   flex-direction: column;
   justify-content: space-between;
   height: 100%;
+  min-width: 0;
 }
 
 .game-status-banner {
@@ -1062,6 +1102,7 @@ body {
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
+  min-width: 0;
 }
 
 .hud-controls {
@@ -1095,6 +1136,7 @@ body {
   border: 1px solid var(--border-glass);
   border-radius: 12px;
   padding: 0.75rem;
+  min-width: 0;
 }
 
 .hand-header {
@@ -1124,6 +1166,24 @@ body {
   align-items: center;
   scrollbar-width: thin;
   scrollbar-color: rgba(255,255,255,0.1) transparent;
+  width: 100%;
+  min-width: 0;
+}
+
+/* Custom Scrollbar for Hand scroll container */
+.hand-scroll-container::-webkit-scrollbar {
+  height: 6px;
+}
+.hand-scroll-container::-webkit-scrollbar-track {
+  background: transparent;
+}
+.hand-scroll-container::-webkit-scrollbar-thumb {
+  background-color: rgba(255, 255, 255, 0.15);
+  border-radius: 3px;
+  transition: background-color 0.2s ease;
+}
+.hand-scroll-container::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(255, 255, 255, 0.35);
 }
 
 .player-hand {
@@ -1421,7 +1481,7 @@ body {
 
   
   .game-layout {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
     grid-template-rows: auto 1fr;
     gap: 1rem;
   }

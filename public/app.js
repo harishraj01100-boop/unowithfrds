@@ -9,6 +9,9 @@ let currentGameState = null;
 let pendingWildCardId = null; // Stores cardId while picking color
 let localGameStarted = false; // Tracks game transition to active state
 
+// Sound status
+let soundMuted = localStorage.getItem('uno_arena_sound_muted') === 'true';
+
 // Audio elements
 const sounds = {
   deal: document.getElementById('sound-deal'),
@@ -16,14 +19,28 @@ const sounds = {
   draw: document.getElementById('sound-draw'),
   uno: document.getElementById('sound-uno'),
   penalty: document.getElementById('sound-penalty'),
-  win: document.getElementById('sound-win')
+  win: document.getElementById('sound-win'),
+  shuffle: document.getElementById('sound-shuffle'),
+  catch: document.getElementById('sound-catch')
 };
 
 // Helper: Play sound safely
 function playSound(soundKey) {
+  if (soundMuted) return;
   if (sounds[soundKey]) {
     sounds[soundKey].currentTime = 0;
     sounds[soundKey].play().catch(err => console.log('Audio playback delayed:', err));
+  }
+}
+
+// Helper: Trigger vibration safely
+function triggerVibrate(pattern = 100) {
+  if ('vibrate' in navigator) {
+    try {
+      navigator.vibrate(pattern);
+    } catch (err) {
+      console.log('Vibration failed:', err);
+    }
   }
 }
 
@@ -90,6 +107,9 @@ const saveBackendUrlBtn = document.getElementById('save-backend-url-btn');
 const connectionStatusBadge = document.getElementById('connection-status-badge');
 const connectionStatusText = document.getElementById('connection-status-text');
 
+// DOM Elements - Sound Toggle
+const soundToggleBtn = document.getElementById('sound-toggle-btn');
+
 // --- Screen Navigation Helpers ---
 function showScreen(screen) {
   [lobbyScreen, waitingScreen, gameScreen].forEach(s => s.classList.remove('active'));
@@ -99,6 +119,32 @@ function showScreen(screen) {
 // Pre-fill saved backend URL
 if (savedBackendUrl) {
   backendUrlInput.value = savedBackendUrl;
+}
+
+// Initialize Sound Toggle
+if (soundToggleBtn) {
+  updateSoundToggleButton();
+
+  soundToggleBtn.addEventListener('click', () => {
+    soundMuted = !soundMuted;
+    localStorage.setItem('uno_arena_sound_muted', soundMuted);
+    updateSoundToggleButton();
+    if (!soundMuted) {
+      playSound('play');
+    }
+  });
+}
+
+function updateSoundToggleButton() {
+  if (!soundToggleBtn) return;
+  const icon = soundToggleBtn.querySelector('i');
+  if (soundMuted) {
+    soundToggleBtn.classList.add('muted');
+    icon.className = 'fa-solid fa-volume-xmark';
+  } else {
+    soundToggleBtn.classList.remove('muted');
+    icon.className = 'fa-solid fa-volume-high';
+  }
 }
 
 // Toggle Server Settings view
@@ -287,14 +333,29 @@ function bindSocketEvents() {
     chatMessages.scrollTop = chatMessages.scrollHeight;
 
     if (isSystem) {
+      const myName = playerNameInput.value.trim();
+      const isMyAction = myName && msg.text.startsWith(myName);
+
       if (msg.text.includes('drew a card')) {
         playSound('draw');
+        if (isMyAction) {
+          triggerVibrate(80);
+        }
       } else if (msg.text.includes('played')) {
         playSound('play');
+        if (isMyAction) {
+          triggerVibrate(60);
+        }
       } else if (msg.text.includes('UNO!')) {
         playSound('penalty');
+        if (isMyAction) {
+          triggerVibrate(200);
+        }
       } else if (msg.text.includes('declared UNO!')) {
         playSound('uno');
+        if (isMyAction) {
+          triggerVibrate(150);
+        }
       }
     }
   });
@@ -311,16 +372,20 @@ function bindSocketEvents() {
     currentGameState = state;
     console.log('State updated:', state);
 
-    // If game has just started, play a realistic staggered deal sound effect
+    // If game has just started, play shuffle sound and then staggered deal sound effect
     if (justStarted) {
-      let dealSoundCount = 0;
-      const dealSoundInterval = setInterval(() => {
-        playSound('deal');
-        dealSoundCount++;
-        if (dealSoundCount >= 7) {
-          clearInterval(dealSoundInterval);
-        }
-      }, 150);
+      playSound('shuffle');
+      triggerVibrate([100, 50, 100, 50, 150]);
+      setTimeout(() => {
+        let dealSoundCount = 0;
+        const dealSoundInterval = setInterval(() => {
+          playSound('deal');
+          dealSoundCount++;
+          if (dealSoundCount >= 7) {
+            clearInterval(dealSoundInterval);
+          }
+        }, 150);
+      }, 1000);
     }
 
     // If game is not started, we are in the waiting lobby
@@ -503,6 +568,8 @@ function bindSocketEvents() {
         const cardEl = createCardElement(card, isPlayable, () => {
           if (!isPlayable) return;
           
+          triggerVibrate(60);
+          
           if (card.color === 'wild') {
             pendingWildCardId = card.id;
             colorPickerModal.classList.add('active');
@@ -568,6 +635,7 @@ deckDrawPile.addEventListener('click', () => {
   const activePlayer = currentGameState.players[currentGameState.turnIndex];
   if (activePlayer.id !== myPlayerId) return; // not my turn
   if (currentGameState.hasDrawnThisTurn) return;
+  triggerVibrate(80);
   socket.emit('drawCard');
 });
 
@@ -576,11 +644,14 @@ gamePassBtn.addEventListener('click', () => {
   if (!currentGameState) return;
   const activePlayer = currentGameState.players[currentGameState.turnIndex];
   if (activePlayer.id !== myPlayerId) return;
+  triggerVibrate(50);
   socket.emit('passTurn');
 });
 
 // Call UNO
 gameUnoBtn.addEventListener('click', () => {
+  playSound('uno');
+  triggerVibrate(120);
   socket.emit('declareUno');
 });
 
@@ -616,6 +687,8 @@ colorPickerModal.addEventListener('click', (e) => {
 
 // Global catch UNO trigger
 window.triggerCatchUno = function(targetPlayerId) {
+  playSound('catch');
+  triggerVibrate(150);
   socket.emit('catchUno', targetPlayerId);
 };
 
