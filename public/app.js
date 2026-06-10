@@ -6,7 +6,6 @@ let savedBackendUrl = localStorage.getItem('uno_arena_backend_url') || '';
 let myPlayerId = null;
 let currentRoom = null;
 let currentGameState = null;
-let hasDrawnCardThisTurn = false;
 let pendingWildCardId = null; // Stores cardId while picking color
 let localGameStarted = false; // Tracks game transition to active state
 
@@ -484,10 +483,9 @@ function bindSocketEvents() {
     }
 
     if (isMyTurn) {
-      gamePassBtn.disabled = !hasDrawnCardThisTurn;
+      gamePassBtn.disabled = !state.hasDrawnThisTurn;
     } else {
       gamePassBtn.disabled = true;
-      hasDrawnCardThisTurn = false;
     }
 
     // 8. Render Player Hand
@@ -569,7 +567,7 @@ deckDrawPile.addEventListener('click', () => {
   if (!currentGameState || currentGameState.pendingChallenge) return;
   const activePlayer = currentGameState.players[currentGameState.turnIndex];
   if (activePlayer.id !== myPlayerId) return; // not my turn
-  if (hasDrawnCardThisTurn) return;
+  if (currentGameState.hasDrawnThisTurn) return;
   socket.emit('drawCard');
 });
 
@@ -632,6 +630,11 @@ function createCardElement(card, isPlayable, onClickHandler) {
 
   let symbol = card.value;
   let centerSymbol = card.value;
+
+  if (card.value === '6' || card.value === '9') {
+    symbol = `<span class="underline-val">${card.value}</span>`;
+    centerSymbol = `<span class="underline-val">${card.value}</span>`;
+  }
 
   if (card.value === 'skip') {
     symbol = '<i class="fa-solid fa-ban"></i>';

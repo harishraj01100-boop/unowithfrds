@@ -146,6 +146,7 @@ function sanitizeGameState(room, socketId) {
     discardPile: room.discardPile.slice(-1), // only top card is visible
     deckCount: room.deck.length,
     winnerRankings: room.winnerRankings,
+    hasDrawnThisTurn: room.hasDrawnThisTurn,
     pendingChallenge: room.pendingChallenge ? {
       playedById: room.pendingChallenge.playedById,
       playedByName: room.pendingChallenge.playedByName,
@@ -377,17 +378,37 @@ io.on('connection', (socket) => {
 
     const drawnCards = drawCardFromDeck(room, 1);
     if (drawnCards.length > 0) {
-      activePlayer.hand.push(...drawnCards);
+      const drawnCard = drawnCards[0];
+      activePlayer.hand.push(drawnCard);
       activePlayer.unoDeclared = false; // Reset UNO status when drawing
-      room.hasDrawnThisTurn = true;
+      
+      const topCard = room.discardPile[room.discardPile.length - 1];
+      const isPlayable = (
+        drawnCard.color === 'wild' ||
+        drawnCard.color === room.currentSelectedColor ||
+        drawnCard.value.toString() === topCard.value.toString()
+      );
+
+      let systemText = "";
+
+      if (isPlayable) {
+        // Playable: Keep turn, allow player to play it or pass
+        room.hasDrawnThisTurn = true;
+        systemText = `${activePlayer.name} drew a card. It is playable, so they can play it or pass.`;
+      } else {
+        // Not playable: Turn automatically passes to next player
+        room.hasDrawnThisTurn = false;
+        systemText = `${activePlayer.name} drew a card (not playable). Turn passes to the next player.`;
+        room.turnIndex = getNextTurnIndex(room, 1);
+      }
       
       broadcastGameState(room);
       
-      socket.emit('cardDrawnAlert', drawnCards[0]);
+      socket.emit('cardDrawnAlert', drawnCard);
 
       io.to(currentRoomCode).emit('chatMessage', {
         sender: 'System',
-        text: `${activePlayer.name} drew a card.`,
+        text: systemText,
         time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
       });
     } else {

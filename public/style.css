@@ -774,6 +774,21 @@ body {
   background-clip: padding-box;
 }
 
+/* Diagonal swoosh element for classic card design */
+.card:not(.wild)::before {
+  content: '';
+  position: absolute;
+  top: 15%;
+  left: -25%;
+  width: 150%;
+  height: 70%;
+  background: rgba(255, 255, 255, 0.12); /* semi-transparent white swoosh */
+  border-radius: 50%;
+  transform: rotate(-28deg);
+  z-index: 1;
+  pointer-events: none;
+}
+
 /* Card color backgrounds */
 .card.red {
   background-color: var(--color-red);
@@ -798,9 +813,12 @@ body {
 /* Corner symbols */
 .card-top-left,
 .card-bottom-right {
-  font-size: 0.9rem;
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: 0.95rem;
   font-weight: 800;
   color: #ffffff;
+  -webkit-text-stroke: 1px #000000;
   text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
   z-index: 10;
   display: flex;
@@ -865,7 +883,15 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
+  -webkit-text-stroke: 1.8px #000000;
   text-shadow: 2px 3px 0px rgba(0, 0, 0, 0.35); /* Black drop shadow */
+}
+
+/* Underline styling for 6 and 9 */
+.underline-val {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  text-decoration-thickness: 2.5px;
 }
 
 /* Action Symbol Specifics in center */
@@ -1482,6 +1508,11 @@ body {
 
   .card-center-val i {
     font-size: 1.4rem;
+  }
+
+  .underline-val {
+    text-underline-offset: 1.5px;
+    text-decoration-thickness: 1.5px;
   }
 
   .mini-cards-draw2 {
