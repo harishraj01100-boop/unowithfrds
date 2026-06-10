@@ -518,8 +518,9 @@ io.on('connection', (socket) => {
     } else if (card.value === 'reverse') {
       room.direction *= -1; // reverse rotation direction
       systemText += ` Play direction reversed.`;
-      // In 2 player, reverse acts exactly like skip
-      if (room.players.length === 2) {
+      // In a 2-active-player game, reverse acts exactly like skip
+      const activePlayersCount = room.players.filter(p => p.hand.length > 0).length;
+      if (activePlayersCount === 2) {
         nextTurnOffset = 2;
       }
     } else if (card.value === 'draw2') {
