@@ -807,7 +807,8 @@ body {
   justify-content: space-between;
   padding: 0.35rem 0.45rem;
   position: relative;
-  z-index: 1; /* Isolates stacking context to prevent child elements bleeding onto adjacent cards */
+  isolation: isolate; /* Force a new stacking context on every card to prevent children bleeding onto adjacent cards */
+  z-index: 1;
   box-shadow: 0 5px 12px rgba(0, 0, 0, 0.45);
   transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
   user-select: none;
@@ -1193,13 +1194,22 @@ body {
 
 .player-hand {
   display: flex;
-  gap: 0.75rem; /* nice spacing between cards to show full cards */
+  padding: 0 1rem;
 }
 
-/* No overlapping hand margins - show full cards */
+/* Overlapping hand margins for realistic fan layout */
 .player-hand .card {
-  margin-right: 0;
+  margin-right: -24px;
   flex-shrink: 0;
+  transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.player-hand .card:hover {
+  transform: translateY(-25px) scale(1.15) !important;
+  z-index: 100 !important;
+  box-shadow: 0 15px 30px rgba(255,255,255,0.25), 0 0 20px #ffffff;
+  margin-right: -10px !important;
+  margin-left: 14px !important;
 }
 
 /* --- Modals Overlays --- */
@@ -1648,11 +1658,12 @@ body {
   }
 
   .player-hand {
-    gap: 0.5rem;
+    gap: 0;
+    padding: 0 0.5rem;
   }
 
   .player-hand .card {
-    margin-right: 0;
+    margin-right: -18px;
   }
 
   .hud-controls {

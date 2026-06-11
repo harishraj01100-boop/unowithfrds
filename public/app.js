@@ -818,6 +818,9 @@ function bindSocketEvents() {
           cardEl.style.animation = 'none'; // Instant draw/play during turns
         }
 
+        // Stack cards correctly from left to right (card i+1 on top of card i)
+        cardEl.style.zIndex = idx + 1;
+
         playerHand.appendChild(cardEl);
       });
     }
