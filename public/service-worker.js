@@ -1,11 +1,24 @@
-const CACHE_NAME = 'uno-arena-cache-v1';
+const CACHE_NAME = 'uno-arena-cache-v2';
 const ASSETS_TO_CACHE = [
   '/',
   '/index.html',
   '/style.css',
   '/app.js',
   '/manifest.json',
-  '/icons/icon.svg'
+  '/icons/icon.svg',
+  '/sounds/deal.wav',
+  '/sounds/beep.wav',
+  '/sounds/whoosh.wav',
+  '/sounds/flip.wav',
+  '/sounds/power.wav',
+  '/sounds/magic.wav',
+  '/sounds/boom.wav',
+  '/sounds/uno.wav',
+  '/sounds/victory.wav',
+  '/sounds/notification.wav',
+  '/sounds/draw.wav',
+  '/sounds/catch.wav',
+  '/sounds/unoAlert.wav'
 ];
 
 // 1. Install Event: Cache Core Assets

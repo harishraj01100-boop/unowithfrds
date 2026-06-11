@@ -106,21 +106,36 @@ function unlockAudio() {
   if (audioUnlocked) return;
   console.log('User gesture detected. Unlocking audio/vibration APIs...');
   
-  // Play a single short sound (the play/tap sound) to unlock page-wide media playback
-  if (sounds.play) {
-    sounds.play.play()
-      .then(() => {
-        audioUnlocked = true;
-        console.log('Audio context successfully unlocked using tap sound!');
-        
-        // Remove event listeners once unlocked
-        document.removeEventListener('click', unlockAudio);
-        document.removeEventListener('touchend', unlockAudio);
-      })
-      .catch(err => {
-        console.log('Audio unlock failed, will retry on next interaction:', err.message);
-      });
+  // Play and pause all sounds to unlock them for programmatic playback later on mobile
+  for (let key in sounds) {
+    const sound = sounds[key];
+    if (sound && typeof sound.play === 'function') {
+      try {
+        const p = sound.play();
+        if (p !== undefined) {
+          p.then(() => {
+            sound.pause();
+            sound.currentTime = 0;
+          }).catch(err => {
+            // Some sounds may not be fully loaded, ignore safe errors
+            console.log(`Audio unlock note for ${key}:`, err.message);
+          });
+        } else {
+          sound.pause();
+          sound.currentTime = 0;
+        }
+      } catch (err) {
+        console.log(`Error unlocking ${key}:`, err);
+      }
+    }
   }
+
+  audioUnlocked = true;
+  console.log('Audio context successfully unlocked for all sounds!');
+  
+  // Remove event listeners once unlocked
+  document.removeEventListener('click', unlockAudio);
+  document.removeEventListener('touchend', unlockAudio);
 
   // Unlock vibration API on mobile browsers
   triggerVibrate(10);
