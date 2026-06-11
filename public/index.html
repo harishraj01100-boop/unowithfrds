@@ -35,6 +35,9 @@
     <!-- HEADER -->
     <header class="app-header">
       <h1 class="logo-text">UNO <span class="accent-text">ARENA</span></h1>
+      <button id="settings-toggle-btn" class="settings-toggle-btn" title="Game Settings">
+        <i class="fa-solid fa-gear"></i>
+      </button>
       <button id="sound-toggle-btn" class="sound-toggle-btn" title="Toggle Sound">
         <i class="fa-solid fa-volume-high"></i>
       </button>
@@ -339,6 +342,69 @@
     </div>
   </div>
 
+  <!-- MODAL 4: GAME SETTINGS -->
+  <div id="settings-modal" class="modal-overlay">
+    <div class="modal-content settings-content">
+      <div class="settings-header">
+        <i class="fa-solid fa-gears settings-glow-icon"></i>
+        <h2>Game Settings</h2>
+      </div>
+      <p class="settings-subtitle">Configure your sound & interface preferences</p>
+      
+      <div class="settings-options">
+        <div class="settings-option-item">
+          <label class="settings-switch">
+            <input type="checkbox" id="setting-sfx" checked>
+            <span class="settings-slider"></span>
+          </label>
+          <div class="option-details">
+            <span class="option-title">Sound Effects</span>
+            <span class="option-desc">Card plays, draws, deals, and special powers</span>
+          </div>
+        </div>
+        
+        <div class="settings-option-item">
+          <label class="settings-switch">
+            <input type="checkbox" id="setting-chat" checked>
+            <span class="settings-slider"></span>
+          </label>
+          <div class="option-details">
+            <span class="option-title">Chat Notifications</span>
+            <span class="option-desc">Play chime when receiving player messages</span>
+          </div>
+        </div>
+        
+        <div class="settings-option-item">
+          <label class="settings-switch">
+            <input type="checkbox" id="setting-uno-voice" checked>
+            <span class="settings-slider"></span>
+          </label>
+          <div class="option-details">
+            <span class="option-title">UNO Voice Alerts</span>
+            <span class="option-desc">Audio announcements when calling UNO or penalties</span>
+          </div>
+        </div>
+        
+        <div class="settings-option-item">
+          <label class="settings-switch">
+            <input type="checkbox" id="setting-winner-music" checked>
+            <span class="settings-slider"></span>
+          </label>
+          <div class="option-details">
+            <span class="option-title">Victory Standings Music</span>
+            <span class="option-desc">Celebration themes played on game over leaderboard</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-actions">
+        <button id="close-settings-btn" class="btn btn-primary btn-glow" style="width: 100%;">
+          Save & Close
+        </button>
+      </div>
+    </div>
+  </div>
+
   <!-- AUDIO ELEMENTS FOR GAME SOUNDS -->
   <audio id="sound-deal" src="/sounds/deal.wav" preload="auto"></audio>
   <audio id="sound-play" src="/sounds/beep.wav" preload="auto"></audio>
@@ -349,12 +415,12 @@
   <audio id="sound-shuffle" src="/sounds/deal.wav" preload="auto"></audio>
   <audio id="sound-catch" src="/sounds/catch.wav" preload="auto"></audio>
   <audio id="sound-uno-alert" src="/sounds/unoAlert.wav" preload="auto"></audio>
-  <audio id="sound-beep" src="/sounds/beep.wav" preload="auto"></audio>
-  <audio id="sound-whoosh" src="/sounds/whoosh.wav" preload="auto"></audio>
-  <audio id="sound-flip" src="/sounds/flip.wav" preload="auto"></audio>
-  <audio id="sound-power" src="/sounds/power.wav" preload="auto"></audio>
-  <audio id="sound-magic" src="/sounds/magic.wav" preload="auto"></audio>
-  <audio id="sound-boom" src="/sounds/boom.wav" preload="auto"></audio>
+  <audio id="sound-skip" src="/sounds/whoosh.wav" preload="auto"></audio>
+  <audio id="sound-reverse" src="/sounds/flip.wav" preload="auto"></audio>
+  <audio id="sound-draw2" src="/sounds/power.wav" preload="auto"></audio>
+  <audio id="sound-wild" src="/sounds/magic.wav" preload="auto"></audio>
+  <audio id="sound-wild4" src="/sounds/boom.wav" preload="auto"></audio>
+  <audio id="sound-notification" src="/sounds/notification.wav" preload="auto"></audio>
 
   <!-- Socket.IO and Frontend App Logic -->
   <script src="/socket.io/socket.io.js"></script>

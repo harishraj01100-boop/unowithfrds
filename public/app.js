@@ -12,6 +12,12 @@ let localGameStarted = false; // Tracks game transition to active state
 // Sound status
 let soundMuted = localStorage.getItem('uno_arena_sound_muted') === 'true';
 
+// Individual settings state (default true if not defined)
+let soundEffectsEnabled = localStorage.getItem('uno_settings_sfx') !== 'false';
+let chatNotificationsEnabled = localStorage.getItem('uno_settings_chat') !== 'false';
+let unoVoiceEnabled = localStorage.getItem('uno_settings_uno_voice') !== 'false';
+let winnerMusicEnabled = localStorage.getItem('uno_settings_winner_music') !== 'false';
+
 // Audio elements
 const sounds = {
   deal: document.getElementById('sound-deal'),
@@ -23,42 +29,33 @@ const sounds = {
   shuffle: document.getElementById('sound-shuffle'),
   catch: document.getElementById('sound-catch'),
   unoAlert: document.getElementById('sound-uno-alert'),
-  beep: document.getElementById('sound-beep'),
-  whoosh: document.getElementById('sound-whoosh'),
-  flip: document.getElementById('sound-flip'),
-  power: document.getElementById('sound-power'),
-  magic: document.getElementById('sound-magic'),
-  boom: document.getElementById('sound-boom')
+  skip: document.getElementById('sound-skip'),
+  reverse: document.getElementById('sound-reverse'),
+  draw2: document.getElementById('sound-draw2'),
+  wild: document.getElementById('sound-wild'),
+  wild4: document.getElementById('sound-wild4'),
+  notification: document.getElementById('sound-notification')
 };
 
 // Helper: Play sound safely
 function playSound(soundKey) {
   if (soundMuted) return;
+
+  // Filter based on individual setting categories
+  if (soundKey === 'notification') {
+    if (!chatNotificationsEnabled) return;
+  } else if (soundKey === 'uno' || soundKey === 'unoAlert' || soundKey === 'penalty') {
+    if (!unoVoiceEnabled) return;
+  } else if (soundKey === 'win') {
+    if (!winnerMusicEnabled) return;
+  } else {
+    // SFX category: play, skip, reverse, draw2, wild, wild4, deal, draw, catch, shuffle
+    if (!soundEffectsEnabled) return;
+  }
+
   if (sounds[soundKey]) {
     sounds[soundKey].currentTime = 0;
     sounds[soundKey].play().catch(err => console.log('Audio playback delayed:', err));
-  }
-}
-
-// Helper: Play specific card sound based on card value
-function playCardSound(card, isMe) {
-  let soundKey = 'beep';
-  if (card.value === 'skip') {
-    soundKey = 'whoosh';
-  } else if (card.value === 'reverse') {
-    soundKey = 'flip';
-  } else if (card.value === 'draw2') {
-    soundKey = 'power';
-  } else if (card.value === 'wild') {
-    soundKey = 'magic';
-  } else if (card.value === 'draw4') {
-    soundKey = 'boom';
-  }
-
-  playSound(soundKey);
-
-  if (isMe) {
-    triggerVibrate(60);
   }
 }
 
@@ -170,6 +167,15 @@ const connectionStatusText = document.getElementById('connection-status-text');
 // DOM Elements - Sound Toggle
 const soundToggleBtn = document.getElementById('sound-toggle-btn');
 
+// DOM Elements - Settings Modal & Checkboxes
+const settingsToggleBtn = document.getElementById('settings-toggle-btn');
+const settingsModal = document.getElementById('settings-modal');
+const closeSettingsBtn = document.getElementById('close-settings-btn');
+const settingSfx = document.getElementById('setting-sfx');
+const settingChat = document.getElementById('setting-chat');
+const settingUnoVoice = document.getElementById('setting-uno-voice');
+const settingWinnerMusic = document.getElementById('setting-winner-music');
+
 // --- Screen Navigation Helpers ---
 function showScreen(screen) {
   [lobbyScreen, waitingScreen, gameScreen].forEach(s => s.classList.remove('active'));
@@ -205,6 +211,60 @@ function updateSoundToggleButton() {
     soundToggleBtn.classList.remove('muted');
     icon.className = 'fa-solid fa-volume-high';
   }
+}
+
+// Initialize Settings Modal & Checkboxes
+if (settingsToggleBtn && settingsModal) {
+  // Pre-fill checkboxes based on current loaded state
+  settingSfx.checked = soundEffectsEnabled;
+  settingChat.checked = chatNotificationsEnabled;
+  settingUnoVoice.checked = unoVoiceEnabled;
+  settingWinnerMusic.checked = winnerMusicEnabled;
+
+  // Open Settings Modal
+  settingsToggleBtn.addEventListener('click', () => {
+    settingsModal.classList.add('active');
+    triggerVibrate(50);
+  });
+
+  // Close Settings Modal
+  closeSettingsBtn.addEventListener('click', () => {
+    settingsModal.classList.remove('active');
+    triggerVibrate(50);
+  });
+
+  // Close Settings Modal when clicking outside the modal content
+  settingsModal.addEventListener('click', (e) => {
+    if (e.target === settingsModal) {
+      settingsModal.classList.remove('active');
+      triggerVibrate(50);
+    }
+  });
+
+  // Checkbox Event Listeners to save to localStorage and state
+  settingSfx.addEventListener('change', () => {
+    soundEffectsEnabled = settingSfx.checked;
+    localStorage.setItem('uno_settings_sfx', soundEffectsEnabled);
+    if (soundEffectsEnabled) playSound('play');
+  });
+
+  settingChat.addEventListener('change', () => {
+    chatNotificationsEnabled = settingChat.checked;
+    localStorage.setItem('uno_settings_chat', chatNotificationsEnabled);
+    if (chatNotificationsEnabled) playSound('notification');
+  });
+
+  settingUnoVoice.addEventListener('change', () => {
+    unoVoiceEnabled = settingUnoVoice.checked;
+    localStorage.setItem('uno_settings_uno_voice', unoVoiceEnabled);
+    if (unoVoiceEnabled) playSound('uno');
+  });
+
+  settingWinnerMusic.addEventListener('change', () => {
+    winnerMusicEnabled = settingWinnerMusic.checked;
+    localStorage.setItem('uno_settings_winner_music', winnerMusicEnabled);
+    if (winnerMusicEnabled) playSound('win');
+  });
 }
 
 // Toggle Server Settings view
@@ -401,6 +461,29 @@ function bindSocketEvents() {
         if (isMyAction) {
           triggerVibrate(80);
         }
+      } else if (msg.text.includes('played')) {
+        const textUpper = msg.text.toUpperCase();
+        if (textUpper.includes('WILD DRAW FOUR') || textUpper.includes('DRAW4') || textUpper.includes('DRAW FOUR')) {
+          playSound('wild4');
+          triggerVibrate(200);
+        } else if (textUpper.includes('WILD') || textUpper.includes('WILD WILD')) {
+          playSound('wild');
+          triggerVibrate(100);
+        } else if (textUpper.includes('SKIP')) {
+          playSound('skip');
+          triggerVibrate(200);
+        } else if (textUpper.includes('REVERSE')) {
+          playSound('reverse');
+          triggerVibrate(100);
+        } else if (textUpper.includes('DRAW2') || textUpper.includes('DRAW TWO') || textUpper.includes('DRAW_TWO')) {
+          playSound('draw2');
+          triggerVibrate(150);
+        } else {
+          playSound('play'); // Normal card played
+          if (isMyAction) {
+            triggerVibrate(60);
+          }
+        }
       } else if (msg.text.includes('UNO!')) {
         playSound('penalty');
         if (isMyAction) {
@@ -411,6 +494,12 @@ function bindSocketEvents() {
         if (isMyAction) {
           triggerVibrate(150);
         }
+      }
+    } else {
+      // Non-system chat message: play notification sound if sent by someone else
+      const myName = playerNameInput.value.trim();
+      if (msg.sender !== myName) {
+        playSound('notification');
       }
     }
   });
@@ -423,22 +512,6 @@ function bindSocketEvents() {
     // Detect transitions from lobby -> active game
     const justStarted = state.gameStarted && !localGameStarted;
     localGameStarted = state.gameStarted;
-
-    // Detect card played by comparing top discard card
-    if (state.gameStarted && currentGameState && currentGameState.gameStarted) {
-      if (currentGameState.discardPile && state.discardPile) {
-        const prevTopCard = currentGameState.discardPile[currentGameState.discardPile.length - 1];
-        const newTopCard = state.discardPile[state.discardPile.length - 1];
-
-        if (newTopCard && (!prevTopCard || prevTopCard.id !== newTopCard.id)) {
-          // Find who played it (the active player in the previous turn)
-          const prevActivePlayer = currentGameState.players[currentGameState.turnIndex];
-          const isMe = prevActivePlayer && prevActivePlayer.id === myPlayerId;
-
-          playCardSound(newTopCard, isMe);
-        }
-      }
-    }
 
     currentGameState = state;
     console.log('State updated:', state);
