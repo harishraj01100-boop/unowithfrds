@@ -1,4 +1,4 @@
-const CACHE_NAME = 'uno-arena-cache-v8';
+const CACHE_NAME = 'uno-arena-cache-v6';
 const ASSETS_TO_CACHE = [
   '/',
   '/index.html',
@@ -27,9 +27,7 @@ self.addEventListener('install', (event) => {
     caches.open(CACHE_NAME)
       .then((cache) => {
         console.log('Opened cache and adding static assets');
-        // Force network fetch to bypass browser HTTP cache
-        const cacheRequests = ASSETS_TO_CACHE.map(url => new Request(url, { cache: 'reload' }));
-        return cache.addAll(cacheRequests);
+        return cache.addAll(ASSETS_TO_CACHE);
       })
       .then(() => self.skipWaiting())
   );
@@ -51,54 +49,32 @@ self.addEventListener('activate', (event) => {
   );
 });
 
-// 3. Fetch Event: Network-First for HTML/CSS/JS, Stale-While-Revalidate for images/sounds
+// 3. Fetch Event: Stale-While-Revalidate strategy
 self.addEventListener('fetch', (event) => {
   // Skip non-GET requests and WebSocket / Socket.io endpoints
   if (event.request.method !== 'GET' || event.request.url.includes('/socket.io/')) {
     return;
   }
 
-  const url = new URL(event.request.url);
-  // Check if it's a code/structural asset
-  const isCodeAsset = url.pathname === '/' || 
-                      url.pathname.endsWith('.html') || 
-                      url.pathname.endsWith('.css') || 
-                      url.pathname.endsWith('.js') || 
-                      url.pathname.endsWith('.json');
+  event.respondWith(
+    caches.match(event.request)
+      .then((cachedResponse) => {
+        // If resource is in cache, return it and fetch fresh version in the background
+        if (cachedResponse) {
+          fetch(event.request)
+            .then((networkResponse) => {
+              if (networkResponse.status === 200) {
+                caches.open(CACHE_NAME).then((cache) => cache.put(event.request, networkResponse));
+              }
+            })
+            .catch(() => {
+              // Ignore background fetch errors (e.g. offline)
+            });
+          return cachedResponse;
+        }
 
-  if (isCodeAsset) {
-    // Network-First strategy
-    event.respondWith(
-      fetch(event.request)
-        .then((networkResponse) => {
-          if (networkResponse.status === 200) {
-            caches.open(CACHE_NAME).then((cache) => cache.put(event.request, networkResponse.clone()));
-          }
-          return networkResponse;
-        })
-        .catch(() => {
-          // If offline, fall back to cached version (ignore query strings)
-          return caches.match(event.request, { ignoreSearch: true });
-        })
-    );
-  } else {
-    // Stale-While-Revalidate for static resources (images, sounds, etc.)
-    event.respondWith(
-      caches.match(event.request, { ignoreSearch: true })
-        .then((cachedResponse) => {
-          if (cachedResponse) {
-            fetch(event.request)
-              .then((networkResponse) => {
-                if (networkResponse.status === 200) {
-                  caches.open(CACHE_NAME).then((cache) => cache.put(event.request, networkResponse));
-                }
-              })
-              .catch(() => {});
-            return cachedResponse;
-          }
-          return fetch(event.request);
-        })
-    );
-  }
+        // Otherwise, fetch from network directly
+        return fetch(event.request);
+      })
+  );
 });
-

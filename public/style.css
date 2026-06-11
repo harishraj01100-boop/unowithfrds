@@ -807,8 +807,7 @@ body {
   justify-content: space-between;
   padding: 0.35rem 0.45rem;
   position: relative;
-  isolation: isolate; /* Force a new stacking context on every card to prevent children bleeding onto adjacent cards */
-  z-index: 1;
+  z-index: 1; /* Isolates stacking context to prevent child elements bleeding onto adjacent cards */
   box-shadow: 0 5px 12px rgba(0, 0, 0, 0.45);
   transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
   user-select: none;
@@ -1174,6 +1173,7 @@ body {
   scrollbar-color: rgba(255,255,255,0.1) transparent;
   width: 100%;
   min-width: 0;
+  -webkit-overflow-scrolling: touch; /* Smooth mobile momentum scrolling */
 }
 
 /* Custom Scrollbar for Hand scroll container */
@@ -1194,64 +1194,14 @@ body {
 
 .player-hand {
   display: flex;
-  padding: 0 1rem;
+  gap: 0.75rem; /* nice spacing between cards to show full cards */
+  flex-shrink: 0; /* Prevents nested flex container from squishing cards and overriding on mobile */
 }
 
-/* Overlapping hand margins for realistic fan layout */
+/* No overlapping hand margins - show full cards */
 .player-hand .card {
-  margin-right: -24px;
+  margin-right: 0;
   flex-shrink: 0;
-  transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-}
-
-/* Ensure correct left-to-right stacking order in fanned layout */
-.player-hand .card:nth-child(1) { z-index: 1; }
-.player-hand .card:nth-child(2) { z-index: 2; }
-.player-hand .card:nth-child(3) { z-index: 3; }
-.player-hand .card:nth-child(4) { z-index: 4; }
-.player-hand .card:nth-child(5) { z-index: 5; }
-.player-hand .card:nth-child(6) { z-index: 6; }
-.player-hand .card:nth-child(7) { z-index: 7; }
-.player-hand .card:nth-child(8) { z-index: 8; }
-.player-hand .card:nth-child(9) { z-index: 9; }
-.player-hand .card:nth-child(10) { z-index: 10; }
-.player-hand .card:nth-child(11) { z-index: 11; }
-.player-hand .card:nth-child(12) { z-index: 12; }
-.player-hand .card:nth-child(13) { z-index: 13; }
-.player-hand .card:nth-child(14) { z-index: 14; }
-.player-hand .card:nth-child(15) { z-index: 15; }
-.player-hand .card:nth-child(16) { z-index: 16; }
-.player-hand .card:nth-child(17) { z-index: 17; }
-.player-hand .card:nth-child(18) { z-index: 18; }
-.player-hand .card:nth-child(19) { z-index: 19; }
-.player-hand .card:nth-child(20) { z-index: 20; }
-.player-hand .card:nth-child(21) { z-index: 21; }
-.player-hand .card:nth-child(22) { z-index: 22; }
-.player-hand .card:nth-child(23) { z-index: 23; }
-.player-hand .card:nth-child(24) { z-index: 24; }
-.player-hand .card:nth-child(25) { z-index: 25; }
-.player-hand .card:nth-child(26) { z-index: 26; }
-.player-hand .card:nth-child(27) { z-index: 27; }
-.player-hand .card:nth-child(28) { z-index: 28; }
-.player-hand .card:nth-child(29) { z-index: 29; }
-.player-hand .card:nth-child(30) { z-index: 30; }
-.player-hand .card:nth-child(31) { z-index: 31; }
-.player-hand .card:nth-child(32) { z-index: 32; }
-.player-hand .card:nth-child(33) { z-index: 33; }
-.player-hand .card:nth-child(34) { z-index: 34; }
-.player-hand .card:nth-child(35) { z-index: 35; }
-.player-hand .card:nth-child(36) { z-index: 36; }
-.player-hand .card:nth-child(37) { z-index: 37; }
-.player-hand .card:nth-child(38) { z-index: 38; }
-.player-hand .card:nth-child(39) { z-index: 39; }
-.player-hand .card:nth-child(40) { z-index: 40; }
-
-.player-hand .card:hover {
-  transform: translateY(-25px) scale(1.15) !important;
-  z-index: 100 !important;
-  box-shadow: 0 15px 30px rgba(255,255,255,0.25), 0 0 20px #ffffff;
-  margin-right: -10px !important;
-  margin-left: 14px !important;
 }
 
 /* --- Modals Overlays --- */
@@ -1700,12 +1650,13 @@ body {
   }
 
   .player-hand {
-    gap: 0;
-    padding: 0 0.5rem;
+    gap: 0.5rem;
+    flex-shrink: 0;
   }
 
   .player-hand .card {
-    margin-right: -18px;
+    margin-right: 0;
+    flex-shrink: 0;
   }
 
   .hud-controls {
