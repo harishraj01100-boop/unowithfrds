@@ -22,7 +22,13 @@ const sounds = {
   win: document.getElementById('sound-win'),
   shuffle: document.getElementById('sound-shuffle'),
   catch: document.getElementById('sound-catch'),
-  unoAlert: document.getElementById('sound-uno-alert')
+  unoAlert: document.getElementById('sound-uno-alert'),
+  beep: document.getElementById('sound-beep'),
+  whoosh: document.getElementById('sound-whoosh'),
+  flip: document.getElementById('sound-flip'),
+  power: document.getElementById('sound-power'),
+  magic: document.getElementById('sound-magic'),
+  boom: document.getElementById('sound-boom')
 };
 
 // Helper: Play sound safely
@@ -34,58 +40,25 @@ function playSound(soundKey) {
   }
 }
 
-// Global AudioContext for synthesized effects
-let audioCtx = null;
-
-function getAudioContext() {
-  try {
-    if (!audioCtx) {
-      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    }
-    if (audioCtx.state === 'suspended') {
-      audioCtx.resume();
-    }
-    return audioCtx;
-  } catch (err) {
-    console.warn('Could not initialize AudioContext:', err);
-    return null;
+// Helper: Play specific card sound based on card value
+function playCardSound(card, isMe) {
+  let soundKey = 'beep';
+  if (card.value === 'skip') {
+    soundKey = 'whoosh';
+  } else if (card.value === 'reverse') {
+    soundKey = 'flip';
+  } else if (card.value === 'draw2') {
+    soundKey = 'power';
+  } else if (card.value === 'wild') {
+    soundKey = 'magic';
+  } else if (card.value === 'draw4') {
+    soundKey = 'boom';
   }
-}
 
-// Helper: Play synthesized beep sound dynamically (low latency, works offline)
-function playSynthBeep(type) {
-  if (soundMuted) return;
-  try {
-    const ctx = getAudioContext();
-    if (!ctx) return;
-    
-    const osc = ctx.createOscillator();
-    const gainNode = ctx.createGain();
-    
-    osc.connect(gainNode);
-    gainNode.connect(ctx.destination);
-    
-    const now = ctx.currentTime;
-    
-    if (type === 'play') {
-      // Crisp, high-pitched "put card" beep: 650Hz, short duration (0.08s)
-      osc.type = 'sine';
-      osc.frequency.setValueAtTime(650, now);
-      gainNode.gain.setValueAtTime(0.08, now);
-      gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
-      osc.start(now);
-      osc.stop(now + 0.08);
-    } else if (type === 'draw') {
-      // Softer, lower-pitched "take card" beep: 450Hz, slightly longer duration (0.15s)
-      osc.type = 'sine';
-      osc.frequency.setValueAtTime(450, now);
-      gainNode.gain.setValueAtTime(0.08, now);
-      gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
-      osc.start(now);
-      osc.stop(now + 0.15);
-    }
-  } catch (err) {
-    console.warn('Synth beep play failed:', err);
+  playSound(soundKey);
+
+  if (isMe) {
+    triggerVibrate(60);
   }
 }
 
@@ -106,18 +79,6 @@ let audioUnlocked = false;
 function unlockAudio() {
   if (audioUnlocked) return;
   console.log('User gesture detected. Unlocking audio/vibration APIs...');
-  
-  // Unlock dynamic Web Audio API context
-  try {
-    const ctx = getAudioContext();
-    if (ctx) {
-      ctx.resume().then(() => {
-        console.log('Web Audio Context successfully resumed!');
-      });
-    }
-  } catch (err) {
-    console.log('Web Audio Context unlock failed:', err);
-  }
   
   // Play a single short sound (the play/tap sound) to unlock page-wide media playback
   if (sounds.play) {
@@ -230,7 +191,6 @@ if (soundToggleBtn) {
     updateSoundToggleButton();
     if (!soundMuted) {
       playSound('play');
-      playSynthBeep('play');
     }
   });
 }
@@ -438,15 +398,8 @@ function bindSocketEvents() {
 
       if (msg.text.includes('drew a card')) {
         playSound('draw');
-        playSynthBeep('draw');
         if (isMyAction) {
           triggerVibrate(80);
-        }
-      } else if (msg.text.includes('played')) {
-        playSound('play');
-        playSynthBeep('play');
-        if (isMyAction) {
-          triggerVibrate(60);
         }
       } else if (msg.text.includes('UNO!')) {
         playSound('penalty');
@@ -470,6 +423,22 @@ function bindSocketEvents() {
     // Detect transitions from lobby -> active game
     const justStarted = state.gameStarted && !localGameStarted;
     localGameStarted = state.gameStarted;
+
+    // Detect card played by comparing top discard card
+    if (state.gameStarted && currentGameState && currentGameState.gameStarted) {
+      if (currentGameState.discardPile && state.discardPile) {
+        const prevTopCard = currentGameState.discardPile[currentGameState.discardPile.length - 1];
+        const newTopCard = state.discardPile[state.discardPile.length - 1];
+
+        if (newTopCard && (!prevTopCard || prevTopCard.id !== newTopCard.id)) {
+          // Find who played it (the active player in the previous turn)
+          const prevActivePlayer = currentGameState.players[currentGameState.turnIndex];
+          const isMe = prevActivePlayer && prevActivePlayer.id === myPlayerId;
+
+          playCardSound(newTopCard, isMe);
+        }
+      }
+    }
 
     currentGameState = state;
     console.log('State updated:', state);
