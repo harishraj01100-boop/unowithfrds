@@ -1766,8 +1766,10 @@ body {
   }
 }
 
-/* --- Settings Toggle Button --- */
-.settings-toggle-btn {
+/* ==========================================
+   GAME SETTINGS & CUSTOM TOGGLES
+   ========================================== */
+.settings-btn {
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid var(--border-glass);
   color: #fff;
@@ -1783,146 +1785,135 @@ body {
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
   position: absolute;
   top: 50%;
-  right: 5.2rem;
+  right: 4.8rem;
   transform: translateY(-50%);
   z-index: 100;
 }
 
-.settings-toggle-btn:hover {
+.settings-btn:hover {
   background: rgba(255, 255, 255, 0.15);
   border-color: var(--color-wild);
-  box-shadow: 0 0 12px rgba(168, 85, 247, 0.5);
+  box-shadow: 0 0 12px rgba(168, 85, 247, 0.4);
   transform: translateY(-50%) scale(1.08);
 }
 
-/* --- Settings Modal Specifics --- */
-.settings-content {
-  max-width: 450px;
-  border: 1px solid rgba(168, 85, 247, 0.3);
-  box-shadow: 0 0 25px rgba(168, 85, 247, 0.2), 0 8px 32px 0 rgba(0, 0, 0, 0.5);
-  background: rgba(15, 23, 42, 0.95);
-}
-
-.settings-header {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.75rem;
+.settings-icon-glow {
+  font-size: 3rem;
+  color: var(--color-wild);
+  text-shadow: 0 0 20px rgba(168, 85, 247, 0.6);
   margin-bottom: 0.5rem;
 }
 
-.settings-header h2 {
-  font-family: var(--font-display);
-  font-size: 1.8rem;
-  font-weight: 700;
-  color: #fff;
-  margin: 0;
-}
-
-.settings-glow-icon {
-  font-size: 1.8rem;
-  color: var(--color-wild);
-  text-shadow: 0 0 10px rgba(168, 85, 247, 0.6);
-  animation: spin-clockwise 20s linear infinite;
-}
-
-.settings-subtitle {
-  text-align: center;
-  color: var(--text-muted);
-  font-size: 0.9rem;
-  margin-bottom: 1.75rem;
+.settings-header {
+  margin-bottom: 1.5rem;
 }
 
 .settings-options {
   display: flex;
   flex-direction: column;
   gap: 1.25rem;
-  margin-bottom: 2rem;
   text-align: left;
+  margin-bottom: 2rem;
 }
 
-.settings-option-item {
+.settings-group {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--border-glass);
+  border-radius: 10px;
+  padding: 0.85rem 1.2rem;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+.settings-group:hover {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(168, 85, 247, 0.3);
+}
+
+.settings-checkbox-label {
   display: flex;
   align-items: center;
-  gap: 1rem;
-  padding: 0.75rem 1rem;
-  background: rgba(255, 255, 255, 0.02);
-  border: 1px solid rgba(255, 255, 255, 0.04);
-  border-radius: 10px;
-  transition: all 0.2s ease;
-}
-
-.settings-option-item:hover {
-  background: rgba(255, 255, 255, 0.04);
-  border-color: rgba(168, 85, 247, 0.2);
-}
-
-/* Custom CSS Switches */
-.settings-switch {
-  position: relative;
-  display: inline-block;
-  width: 48px;
-  height: 24px;
-  flex-shrink: 0;
-}
-
-.settings-switch input {
-  opacity: 0;
-  width: 0;
-  height: 0;
-}
-
-.settings-slider {
-  position: absolute;
+  gap: 1.25rem;
   cursor: pointer;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: rgba(255, 255, 255, 0.1);
-  border: 1px solid var(--border-glass);
-  transition: .3s;
-  border-radius: 24px;
+  width: 100%;
+  position: relative;
 }
 
-.settings-slider:before {
+/* Hide native checkbox */
+.settings-checkbox-label input[type="checkbox"] {
   position: absolute;
-  content: "";
-  height: 16px;
-  width: 16px;
-  left: 3px;
-  bottom: 3px;
-  background-color: #cbd5e1;
-  transition: .3s;
-  border-radius: 50%;
+  opacity: 0;
+  cursor: pointer;
+  height: 0;
+  width: 0;
 }
 
-.settings-switch input:checked + .settings-slider {
-  background-color: rgba(168, 85, 247, 0.2);
+/* Custom checkbox indicator */
+.custom-checkbox {
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  background-color: var(--bg-input);
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  border-radius: 6px;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* On hover */
+.settings-checkbox-label:hover input[type="checkbox"] ~ .custom-checkbox {
   border-color: var(--color-wild);
-  box-shadow: 0 0 8px rgba(168, 85, 247, 0.4);
+  box-shadow: 0 0 8px rgba(168, 85, 247, 0.3);
 }
 
-.settings-switch input:checked + .settings-slider:before {
-  transform: translateX(24px);
-  background-color: #f3e8ff;
-  box-shadow: 0 0 6px var(--color-wild);
+/* Checked state */
+.settings-checkbox-label input[type="checkbox"]:checked ~ .custom-checkbox {
+  background-color: var(--color-wild);
+  border-color: var(--color-wild);
+  box-shadow: 0 0 12px rgba(168, 85, 247, 0.5);
 }
 
-.option-details {
+/* Checkmark check symbol */
+.custom-checkbox::after {
+  content: "";
+  display: none;
+  width: 6px;
+  height: 12px;
+  border: solid white;
+  border-width: 0 3px 3px 0;
+  transform: rotate(45deg);
+  margin-bottom: 2px;
+}
+
+/* Show checkmark when checked */
+.settings-checkbox-label input[type="checkbox"]:checked ~ .custom-checkbox::after {
+  display: block;
+}
+
+.checkbox-text {
   display: flex;
   flex-direction: column;
   gap: 0.15rem;
 }
 
-.option-title {
+.checkbox-title {
+  font-family: var(--font-display);
+  font-size: 1.05rem;
   font-weight: 600;
-  font-size: 0.95rem;
-  color: #f1f5f9;
+  color: #fff;
 }
 
-.option-desc {
-  font-size: 0.78rem;
+.checkbox-desc {
+  font-size: 0.8rem;
   color: var(--text-muted);
+  line-height: 1.3;
+}
+
+/* Mobile Settings Button Styling */
+@media (max-width: 768px) {
+  .settings-btn {
+    right: 4.5rem;
+  }
 }
 

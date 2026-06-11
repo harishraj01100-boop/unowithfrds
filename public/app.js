@@ -8,51 +8,56 @@ let currentRoom = null;
 let currentGameState = null;
 let pendingWildCardId = null; // Stores cardId while picking color
 let localGameStarted = false; // Tracks game transition to active state
+let lastDiscardCardId = null; // Track discard card to play sound on change
 
 // Sound status
 let soundMuted = localStorage.getItem('uno_arena_sound_muted') === 'true';
 
-// Individual settings state (default true if not defined)
-let soundEffectsEnabled = localStorage.getItem('uno_settings_sfx') !== 'false';
-let chatNotificationsEnabled = localStorage.getItem('uno_settings_chat') !== 'false';
-let unoVoiceEnabled = localStorage.getItem('uno_settings_uno_voice') !== 'false';
-let winnerMusicEnabled = localStorage.getItem('uno_settings_winner_music') !== 'false';
+// Game settings
+let settings = {
+  soundEffects: localStorage.getItem('uno_arena_settings_soundEffects') !== 'false',
+  chatNotifications: localStorage.getItem('uno_arena_settings_chatNotifications') !== 'false',
+  unoVoice: localStorage.getItem('uno_arena_settings_unoVoice') !== 'false',
+  winnerMusic: localStorage.getItem('uno_arena_settings_winnerMusic') !== 'false'
+};
 
 // Audio elements
 const sounds = {
   deal: document.getElementById('sound-deal'),
-  play: document.getElementById('sound-play'),
-  draw: document.getElementById('sound-draw'),
+  play: document.getElementById('sound-beep'), // Map 'play' to beep.wav for compatibility
+  beep: document.getElementById('sound-beep'),
+  whoosh: document.getElementById('sound-whoosh'),
+  flip: document.getElementById('sound-flip'),
+  power: document.getElementById('sound-power'),
+  magic: document.getElementById('sound-magic'),
+  boom: document.getElementById('sound-boom'),
   uno: document.getElementById('sound-uno'),
-  penalty: document.getElementById('sound-penalty'),
+  victory: document.getElementById('sound-victory'),
   win: document.getElementById('sound-win'),
-  shuffle: document.getElementById('sound-shuffle'),
+  notification: document.getElementById('sound-notification'),
+  draw: document.getElementById('sound-draw'),
   catch: document.getElementById('sound-catch'),
   unoAlert: document.getElementById('sound-uno-alert'),
-  skip: document.getElementById('sound-skip'),
-  reverse: document.getElementById('sound-reverse'),
-  draw2: document.getElementById('sound-draw2'),
-  wild: document.getElementById('sound-wild'),
-  wild4: document.getElementById('sound-wild4'),
-  notification: document.getElementById('sound-notification')
+  penalty: document.getElementById('sound-penalty'),
+  shuffle: document.getElementById('sound-shuffle')
 };
 
 // Helper: Play sound safely
 function playSound(soundKey) {
   if (soundMuted) return;
-
-  // Filter based on individual setting categories
-  if (soundKey === 'notification') {
-    if (!chatNotificationsEnabled) return;
-  } else if (soundKey === 'uno' || soundKey === 'unoAlert' || soundKey === 'penalty') {
-    if (!unoVoiceEnabled) return;
-  } else if (soundKey === 'win') {
-    if (!winnerMusicEnabled) return;
-  } else {
-    // SFX category: play, skip, reverse, draw2, wild, wild4, deal, draw, catch, shuffle
-    if (!soundEffectsEnabled) return;
+  
+  // Map sound key to category
+  let category = 'soundEffects';
+  if (soundKey === 'uno' || soundKey === 'unoAlert' || soundKey === 'penalty' || soundKey === 'catch') {
+    category = 'unoVoice';
+  } else if (soundKey === 'win' || soundKey === 'victory') {
+    category = 'winnerMusic';
+  } else if (soundKey === 'notification') {
+    category = 'chatNotifications';
   }
-
+  
+  if (!settings[category]) return;
+  
   if (sounds[soundKey]) {
     sounds[soundKey].currentTime = 0;
     sounds[soundKey].play().catch(err => console.log('Audio playback delayed:', err));
@@ -67,6 +72,30 @@ function triggerVibrate(pattern = 100) {
     } catch (err) {
       console.log('Vibration failed:', err);
     }
+  }
+}
+
+// Helper: Play sound and vibration for played card
+function playCardSoundAndVibrate(card) {
+  const val = card.value.toString().toLowerCase();
+  
+  if (val === 'skip') {
+    playSound('whoosh');
+    triggerVibrate(200);
+  } else if (val === 'reverse') {
+    playSound('flip');
+    triggerVibrate(100);
+  } else if (val === 'draw2') {
+    playSound('power');
+    triggerVibrate(200);
+  } else if (val === 'wild') {
+    playSound('magic');
+    triggerVibrate(150);
+  } else if (val === 'draw4') {
+    playSound('boom');
+    triggerVibrate(200);
+  } else {
+    playSound('beep');
   }
 }
 
@@ -164,15 +193,13 @@ const saveBackendUrlBtn = document.getElementById('save-backend-url-btn');
 const connectionStatusBadge = document.getElementById('connection-status-badge');
 const connectionStatusText = document.getElementById('connection-status-text');
 
-// DOM Elements - Sound Toggle
+// DOM Elements - Sound/Settings Toggle
 const soundToggleBtn = document.getElementById('sound-toggle-btn');
-
-// DOM Elements - Settings Modal & Checkboxes
-const settingsToggleBtn = document.getElementById('settings-toggle-btn');
+const settingsBtn = document.getElementById('settings-btn');
 const settingsModal = document.getElementById('settings-modal');
 const closeSettingsBtn = document.getElementById('close-settings-btn');
-const settingSfx = document.getElementById('setting-sfx');
-const settingChat = document.getElementById('setting-chat');
+const settingSoundEffects = document.getElementById('setting-sound-effects');
+const settingChatNotifications = document.getElementById('setting-chat-notifications');
 const settingUnoVoice = document.getElementById('setting-uno-voice');
 const settingWinnerMusic = document.getElementById('setting-winner-music');
 
@@ -201,6 +228,53 @@ if (soundToggleBtn) {
   });
 }
 
+// Initialize Settings Modal & Checkboxes
+if (settingSoundEffects) settingSoundEffects.checked = settings.soundEffects;
+if (settingChatNotifications) settingChatNotifications.checked = settings.chatNotifications;
+if (settingUnoVoice) settingUnoVoice.checked = settings.unoVoice;
+if (settingWinnerMusic) settingWinnerMusic.checked = settings.winnerMusic;
+
+if (settingSoundEffects) {
+  settingSoundEffects.addEventListener('change', (e) => {
+    settings.soundEffects = e.target.checked;
+    localStorage.setItem('uno_arena_settings_soundEffects', settings.soundEffects);
+  });
+}
+if (settingChatNotifications) {
+  settingChatNotifications.addEventListener('change', (e) => {
+    settings.chatNotifications = e.target.checked;
+    localStorage.setItem('uno_arena_settings_chatNotifications', settings.chatNotifications);
+  });
+}
+if (settingUnoVoice) {
+  settingUnoVoice.addEventListener('change', (e) => {
+    settings.unoVoice = e.target.checked;
+    localStorage.setItem('uno_arena_settings_unoVoice', settings.unoVoice);
+  });
+}
+if (settingWinnerMusic) {
+  settingWinnerMusic.addEventListener('change', (e) => {
+    settings.winnerMusic = e.target.checked;
+    localStorage.setItem('uno_arena_settings_winnerMusic', settings.winnerMusic);
+  });
+}
+
+if (settingsBtn && settingsModal && closeSettingsBtn) {
+  settingsBtn.addEventListener('click', () => {
+    settingsModal.classList.add('active');
+  });
+
+  closeSettingsBtn.addEventListener('click', () => {
+    settingsModal.classList.remove('active');
+  });
+
+  settingsModal.addEventListener('click', (e) => {
+    if (e.target === settingsModal) {
+      settingsModal.classList.remove('active');
+    }
+  });
+}
+
 function updateSoundToggleButton() {
   if (!soundToggleBtn) return;
   const icon = soundToggleBtn.querySelector('i');
@@ -211,60 +285,6 @@ function updateSoundToggleButton() {
     soundToggleBtn.classList.remove('muted');
     icon.className = 'fa-solid fa-volume-high';
   }
-}
-
-// Initialize Settings Modal & Checkboxes
-if (settingsToggleBtn && settingsModal) {
-  // Pre-fill checkboxes based on current loaded state
-  settingSfx.checked = soundEffectsEnabled;
-  settingChat.checked = chatNotificationsEnabled;
-  settingUnoVoice.checked = unoVoiceEnabled;
-  settingWinnerMusic.checked = winnerMusicEnabled;
-
-  // Open Settings Modal
-  settingsToggleBtn.addEventListener('click', () => {
-    settingsModal.classList.add('active');
-    triggerVibrate(50);
-  });
-
-  // Close Settings Modal
-  closeSettingsBtn.addEventListener('click', () => {
-    settingsModal.classList.remove('active');
-    triggerVibrate(50);
-  });
-
-  // Close Settings Modal when clicking outside the modal content
-  settingsModal.addEventListener('click', (e) => {
-    if (e.target === settingsModal) {
-      settingsModal.classList.remove('active');
-      triggerVibrate(50);
-    }
-  });
-
-  // Checkbox Event Listeners to save to localStorage and state
-  settingSfx.addEventListener('change', () => {
-    soundEffectsEnabled = settingSfx.checked;
-    localStorage.setItem('uno_settings_sfx', soundEffectsEnabled);
-    if (soundEffectsEnabled) playSound('play');
-  });
-
-  settingChat.addEventListener('change', () => {
-    chatNotificationsEnabled = settingChat.checked;
-    localStorage.setItem('uno_settings_chat', chatNotificationsEnabled);
-    if (chatNotificationsEnabled) playSound('notification');
-  });
-
-  settingUnoVoice.addEventListener('change', () => {
-    unoVoiceEnabled = settingUnoVoice.checked;
-    localStorage.setItem('uno_settings_uno_voice', unoVoiceEnabled);
-    if (unoVoiceEnabled) playSound('uno');
-  });
-
-  settingWinnerMusic.addEventListener('change', () => {
-    winnerMusicEnabled = settingWinnerMusic.checked;
-    localStorage.setItem('uno_settings_winner_music', winnerMusicEnabled);
-    if (winnerMusicEnabled) playSound('win');
-  });
 }
 
 // Toggle Server Settings view
@@ -452,7 +472,13 @@ function bindSocketEvents() {
     chatMessages.appendChild(messageElement);
     chatMessages.scrollTop = chatMessages.scrollHeight;
 
-    if (isSystem) {
+    if (!isSystem) {
+      // Play chat notification sound if the message was sent by someone else
+      const myName = playerNameInput ? playerNameInput.value.trim() : '';
+      if (msg.sender !== myName) {
+        playSound('notification');
+      }
+    } else {
       const myName = playerNameInput.value.trim();
       const isMyAction = myName && msg.text.startsWith(myName);
 
@@ -460,29 +486,6 @@ function bindSocketEvents() {
         playSound('draw');
         if (isMyAction) {
           triggerVibrate(80);
-        }
-      } else if (msg.text.includes('played')) {
-        const textUpper = msg.text.toUpperCase();
-        if (textUpper.includes('WILD DRAW FOUR') || textUpper.includes('DRAW4') || textUpper.includes('DRAW FOUR')) {
-          playSound('wild4');
-          triggerVibrate(200);
-        } else if (textUpper.includes('WILD') || textUpper.includes('WILD WILD')) {
-          playSound('wild');
-          triggerVibrate(100);
-        } else if (textUpper.includes('SKIP')) {
-          playSound('skip');
-          triggerVibrate(200);
-        } else if (textUpper.includes('REVERSE')) {
-          playSound('reverse');
-          triggerVibrate(100);
-        } else if (textUpper.includes('DRAW2') || textUpper.includes('DRAW TWO') || textUpper.includes('DRAW_TWO')) {
-          playSound('draw2');
-          triggerVibrate(150);
-        } else {
-          playSound('play'); // Normal card played
-          if (isMyAction) {
-            triggerVibrate(60);
-          }
         }
       } else if (msg.text.includes('UNO!')) {
         playSound('penalty');
@@ -494,12 +497,6 @@ function bindSocketEvents() {
         if (isMyAction) {
           triggerVibrate(150);
         }
-      }
-    } else {
-      // Non-system chat message: play notification sound if sent by someone else
-      const myName = playerNameInput.value.trim();
-      if (msg.sender !== myName) {
-        playSound('notification');
       }
     }
   });
@@ -515,6 +512,21 @@ function bindSocketEvents() {
 
     currentGameState = state;
     console.log('State updated:', state);
+
+    // Detect if a card was played (on turn change or discard update)
+    if (!state.gameStarted) {
+      lastDiscardCardId = null;
+    } else if (state.discardPile && state.discardPile.length > 0) {
+      const topCard = state.discardPile[state.discardPile.length - 1];
+      if (justStarted) {
+        lastDiscardCardId = topCard.id;
+      } else if (lastDiscardCardId && lastDiscardCardId !== topCard.id) {
+        lastDiscardCardId = topCard.id;
+        playCardSoundAndVibrate(topCard);
+      } else if (!lastDiscardCardId) {
+        lastDiscardCardId = topCard.id;
+      }
+    }
 
     // If game has just started, play shuffle sound and then staggered deal sound effect
     if (justStarted) {
