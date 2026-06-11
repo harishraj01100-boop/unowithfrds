@@ -943,23 +943,11 @@ function createCardElement(card, isPlayable, onClickHandler) {
   }
 
   if (card.value === 'skip') {
-    symbol = `
-      <svg viewBox="0 0 100 100" class="uno-icon svg-skip">
-        <circle cx="50" cy="50" r="34" fill="none" stroke="#000000" stroke-width="26" />
-        <line x1="74" y1="26" x2="26" y2="74" stroke="#000000" stroke-width="26" />
-        <circle cx="50" cy="50" r="34" fill="none" stroke="currentColor" stroke-width="14" />
-        <line x1="74" y1="26" x2="26" y2="74" stroke="currentColor" stroke-width="14" />
-      </svg>
-    `;
-    centerSymbol = symbol;
+    symbol = '<i class="fa-solid fa-ban"></i>';
+    centerSymbol = '<i class="fa-solid fa-ban"></i>';
   } else if (card.value === 'reverse') {
-    symbol = `
-      <svg viewBox="0 0 100 100" class="uno-icon svg-reverse">
-        <path d="M78.2,46.7c0-10.8-7-20.1-17.2-22.9L64,16.5L46.2,26.7L64,36.9l-2.6-6.6c6.2,2,10.5,8,10.5,14.9c0,5.7-3,10.8-7.7,13.4l6.3,6.3C83.2,74.5,88.2,61.2,78.2,46.7z" />
-        <path d="M21.8,53.3c0,10.8,7,20.1,17.2,22.9L36,83.5l17.8-10.2L36,63.1l2.6,6.6c-6.2-2-10.5-8-10.5-14.9c0-5.7,3-10.8,7.7-13.4l-6.3-6.3C16.8,25.5,11.8,38.8,21.8,53.3z" />
-      </svg>
-    `;
-    centerSymbol = symbol;
+    symbol = '<i class="fa-solid fa-arrows-up-down" style="transform: rotate(45deg);"></i>';
+    centerSymbol = '<i class="fa-solid fa-arrows-up-down" style="transform: rotate(45deg);"></i>';
   } else if (card.value === 'draw2') {
     symbol = '+2';
     centerSymbol = `

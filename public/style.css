@@ -12,17 +12,17 @@
   --border-neon-green: #22c55e;
   
   /* Brand/Card Colors */
-  --color-red: #d62d20;
-  --color-blue: #0057e7;
-  --color-green: #008744;
-  --color-yellow: #ffa700;
+  --color-red: #ff3b30;
+  --color-blue: #007aff;
+  --color-green: #34c759;
+  --color-yellow: #ffcc00;
   --color-wild: #a855f7;
   
   /* Shadows & Glows */
-  --glow-red: 0 0 15px rgba(214, 45, 32, 0.5), inset 0 0 8px rgba(214, 45, 32, 0.3);
-  --glow-blue: 0 0 15px rgba(0, 87, 231, 0.5), inset 0 0 8px rgba(0, 87, 231, 0.3);
-  --glow-green: 0 0 15px rgba(0, 135, 68, 0.5), inset 0 0 8px rgba(0, 135, 68, 0.3);
-  --glow-yellow: 0 0 15px rgba(255, 167, 0, 0.6), inset 0 0 8px rgba(255, 167, 0, 0.3);
+  --glow-red: 0 0 15px rgba(255, 59, 48, 0.5), inset 0 0 8px rgba(255, 59, 48, 0.3);
+  --glow-blue: 0 0 15px rgba(0, 122, 255, 0.5), inset 0 0 8px rgba(0, 122, 255, 0.3);
+  --glow-green: 0 0 15px rgba(52, 199, 89, 0.5), inset 0 0 8px rgba(52, 199, 89, 0.3);
+  --glow-yellow: 0 0 15px rgba(255, 204, 0, 0.6), inset 0 0 8px rgba(255, 204, 0, 0.3);
   --glow-wild: 0 0 20px rgba(168, 85, 247, 0.6), inset 0 0 10px rgba(168, 85, 247, 0.4);
   --glow-active-player: 0 0 20px rgba(34, 197, 94, 0.4);
 
@@ -784,12 +784,6 @@ body {
   box-shadow: 0 10px 25px rgba(168, 85, 247, 0.3);
 }
 
-/* Discard Pile Top Card Styling (realistic slight rotation) */
-.discard-pile .card {
-  transform: rotate(-3.5deg);
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.5);
-}
-
 .pile-badge {
   position: absolute;
   top: -8px;
@@ -813,12 +807,14 @@ body {
   justify-content: space-between;
   padding: 0.35rem 0.45rem;
   position: relative;
-  box-shadow: inset 0 0 0 1.5px rgba(0, 0, 0, 0.35), 0 5px 12px rgba(0, 0, 0, 0.45);
+  box-shadow: 0 5px 12px rgba(0, 0, 0, 0.45);
   transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
   user-select: none;
   font-family: var(--font-display);
   overflow: hidden;
   border: 4px solid #ffffff; /* iconic thick white border */
+  outline: 1.5px solid rgba(0, 0, 0, 0.2);
+  outline-offset: -3px;
   background-clip: padding-box;
 }
 
@@ -826,62 +822,48 @@ body {
 .card:not(.wild)::before {
   content: '';
   position: absolute;
-  top: 12%;
-  left: -30%;
-  width: 160%;
-  height: 75%;
-  background: rgba(255, 255, 255, 0.14); /* semi-transparent white swoosh */
+  top: 15%;
+  left: -25%;
+  width: 150%;
+  height: 70%;
+  background: rgba(255, 255, 255, 0.12); /* semi-transparent white swoosh */
   border-radius: 50%;
-  transform: rotate(-25deg);
+  transform: rotate(-28deg);
   z-index: 1;
   pointer-events: none;
 }
 
-/* Card color backgrounds (with premium glossy gradients) */
+/* Card color backgrounds */
 .card.red {
-  background: linear-gradient(135deg, #e73c35 0%, #b6181b 100%);
+  background-color: var(--color-red);
 }
 
 .card.blue {
-  background: linear-gradient(135deg, #0c86eb 0%, #0a5aa3 100%);
+  background-color: var(--color-blue);
 }
 
 .card.green {
-  background: linear-gradient(135deg, #18b850 0%, #0c8f3a 100%);
+  background-color: var(--color-green);
 }
 
 .card.yellow {
-  background: linear-gradient(135deg, #ffd000 0%, #e69000 100%);
+  background-color: var(--color-yellow);
 }
 
 .card.wild {
-  background: #171717;
-}
-
-/* Glass/Glossy shine overlay on cards */
-.card::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.18) 0%, rgba(255, 255, 255, 0) 45%, rgba(0, 0, 0, 0.08) 100%);
-  z-index: 8;
-  pointer-events: none;
+  background-color: #000000; /* Wild cards have black backgrounds */
 }
 
 /* Corner symbols */
 .card-top-left,
 .card-bottom-right {
-  font-family: 'Arial Black', 'Impact', var(--font-display), sans-serif;
+  font-family: var(--font-display);
   font-style: italic;
-  font-size: 1.05rem;
-  font-weight: 900;
+  font-size: 0.95rem;
+  font-weight: 800;
   color: #ffffff;
-  -webkit-text-stroke: 1.2px #000000;
-  paint-order: stroke fill;
-  text-shadow: 1px 1.5px 0px rgba(0, 0, 0, 0.45);
+  -webkit-text-stroke: 1px #000000;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
   z-index: 10;
   display: flex;
   align-items: center;
@@ -897,120 +879,69 @@ body {
   transform: rotate(180deg);
 }
 
-/* Large Center Oval - Solid White as per the reference image */
+/* Large Center Oval */
 .card-oval {
   position: absolute;
-  top: 17%;
-  left: 8%;
-  width: 84%;
-  height: 66%;
+  top: 15%;
+  left: 6%;
+  width: 88%;
+  height: 70%;
   border-radius: 50%;
   transform: rotate(-22deg);
   display: flex;
   align-items: center;
   justify-content: center;
-  background-color: #ffffff; /* Solid White background */
-  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.3);
+  border: 3.5px solid #ffffff; /* White outline for the oval */
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.25);
   z-index: 5;
   overflow: hidden;
-  border: none;
 }
 
-/* Wild card center oval is 4-color split and overrides white background */
+/* Center oval colors matching the card color */
+.card.red .card-oval { background-color: var(--color-red); }
+.card.blue .card-oval { background-color: var(--color-blue); }
+.card.green .card-oval { background-color: var(--color-green); }
+.card.yellow .card-oval { background-color: var(--color-yellow); }
+
+/* Wild card center oval is 4-color split */
 .card.wild .card-oval {
   background: conic-gradient(
     var(--color-red) 0% 25%, 
     var(--color-blue) 25% 50%, 
     var(--color-green) 50% 75%, 
     var(--color-yellow) 75% 100%
-  ) !important;
+  );
   border: 3.5px solid #ffffff;
-  box-shadow: inset 0 0 10px rgba(0,0,0,0.3), 0 3px 6px rgba(0, 0, 0, 0.3);
+  box-shadow: inset 0 0 10px rgba(0,0,0,0.3);
 }
 
-/* Central Symbol inside the Oval - color inherits the card suit color */
+/* Central Symbol inside the Oval */
 .card-center-val {
-  font-size: 3.2rem;
+  font-size: 2.8rem;
   font-weight: 900;
   font-style: italic;
-  font-family: 'Arial Black', 'Impact', var(--font-display), sans-serif;
+  font-family: var(--font-display);
+  color: #ffffff; /* Value is white */
   transform: rotate(22deg); /* Straighten */
   user-select: none;
   display: flex;
   align-items: center;
   justify-content: center;
-  -webkit-text-stroke: 2px #000000;
-  paint-order: stroke fill;
-  text-shadow: 2px 2.5px 0px rgba(0, 0, 0, 0.35);
+  -webkit-text-stroke: 1.8px #000000;
+  text-shadow: 2px 3px 0px rgba(0, 0, 0, 0.35); /* Black drop shadow */
 }
-
-.card.red .card-center-val { color: var(--color-red); }
-.card.blue .card-center-val { color: var(--color-blue); }
-.card.green .card-center-val { color: var(--color-green); }
-.card.yellow .card-center-val { color: var(--color-yellow); }
-.card.wild .card-center-val { color: #ffffff; -webkit-text-stroke: 2px #000000; paint-order: stroke fill; text-shadow: 2px 3px 0px rgba(0, 0, 0, 0.35); }
 
 /* Underline styling for 6 and 9 */
 .underline-val {
   text-decoration: underline;
-  text-underline-offset: 2px;
-  text-decoration-thickness: 3px;
+  text-underline-offset: 3px;
+  text-decoration-thickness: 2.5px;
 }
 
 /* Action Symbol Specifics in center */
 .card-center-val i {
   font-size: 2.2rem;
-}
-
-/* Custom SVG Icons Styling */
-.uno-icon {
-  width: 100%;
-  height: 100%;
-  display: block;
-}
-
-.card-center-val .uno-icon {
-  width: 52px;
-  height: 52px;
-}
-
-.card-top-left .uno-icon,
-.card-bottom-right .uno-icon {
-  width: 14px;
-  height: 14px;
-}
-
-.uno-icon.svg-reverse path {
-  fill: currentColor;
-  stroke: #000000;
-  stroke-width: 6px;
-  stroke-linejoin: round;
-  paint-order: stroke fill;
-}
-
-/* Media queries for SVG Scaling */
-@media (max-width: 900px) {
-  .card-center-val .uno-icon {
-    width: 38px;
-    height: 38px;
-  }
-  .card-top-left .uno-icon,
-  .card-bottom-right .uno-icon {
-    width: 11px;
-    height: 11px;
-  }
-}
-
-@media (max-width: 500px) {
-  .card-center-val .uno-icon {
-    width: 32px;
-    height: 32px;
-  }
-  .card-top-left .uno-icon,
-  .card-bottom-right .uno-icon {
-    width: 10px;
-    height: 10px;
-  }
+  text-shadow: 2px 3px 0px rgba(0, 0, 0, 0.35);
 }
 
 /* Mini Draw 2 Cards inside center oval */
@@ -1025,16 +956,17 @@ body {
   position: absolute;
   width: 20px;
   height: 32px;
+  background-color: #ffffff;
   border-radius: 3px;
-  border: 2px solid #ffffff; /* White border around the mini card */
-  box-shadow: 1px 1px 3px rgba(0, 0, 0, 0.3);
+  border: 2.5px solid #ffffff;
+  box-shadow: 1.5px 1.5px 3px rgba(0, 0, 0, 0.35);
 }
 
 /* Draw 2 card colors inherit */
-.card.red .mini-card-shape { background-color: var(--color-red); }
-.card.blue .mini-card-shape { background-color: var(--color-blue); }
-.card.green .mini-card-shape { background-color: var(--color-green); }
-.card.yellow .mini-card-shape { background-color: var(--color-yellow); }
+.card.red .mini-card-shape { outline: 2px solid var(--color-red); }
+.card.blue .mini-card-shape { outline: 2px solid var(--color-blue); }
+.card.green .mini-card-shape { outline: 2px solid var(--color-green); }
+.card.yellow .mini-card-shape { outline: 2px solid var(--color-yellow); }
 
 .mini-cards-draw2 .mini-card-shape:nth-child(1) {
   left: 4px;
@@ -1092,11 +1024,9 @@ body {
 }
 
 .card.playable:hover {
-  transform: translateY(-25px) rotate(-3deg) scale(1.15) !important;
+  transform: translateY(-25px) scale(1.15) !important;
   z-index: 100;
   box-shadow: 0 15px 30px rgba(255,255,255,0.25), 0 0 20px #ffffff;
-  margin-right: -10px !important;
-  margin-left: 15px !important;
 }
 
 /* Staggered deal animation */
@@ -1128,43 +1058,29 @@ body {
 
 /* Card Back Styles */
 .card-back {
-  background: radial-gradient(circle, #d62d20 0%, #800a04 100%) !important;
-  border-color: #ffffff !important;
+  background: radial-gradient(circle, #ff1e00 0%, #a30000 100%);
+  border-color: #ffffff;
   display: flex;
   align-items: center;
   justify-content: center;
-  position: relative;
-  overflow: hidden;
-  box-shadow: inset 0 0 0 1.5px rgba(0, 0, 0, 0.35), 0 5px 12px rgba(0, 0, 0, 0.45);
-}
-
-.card-oval-back {
-  position: absolute;
-  top: 22%;
-  left: 10%;
-  width: 80%;
-  height: 56%;
-  border-radius: 50%;
-  transform: rotate(-22deg);
-  background-color: #ffcc00; /* slanted yellow oval */
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.35);
-  border: 2px solid #ffffff; /* white border around the yellow oval */
+  outline: 1.5px solid rgba(0, 0, 0, 0.2);
+  outline-offset: -3px;
 }
 
 .card-back-logo {
-  font-size: 1.8rem;
+  font-size: 1.6rem;
   font-weight: 900;
-  color: #d62d20; /* Red logo text */
+  color: #ffcc00;
   font-style: italic;
-  letter-spacing: 1px;
-  transform: scaleX(1.15);
-  font-family: 'Arial Black', 'Impact', var(--font-display), sans-serif;
-  -webkit-text-stroke: 1.5px #000000;
-  paint-order: stroke fill;
-  text-shadow: 2px 2px 0px #ffffff, 3px 3px 0px rgba(0, 0, 0, 0.3);
+  letter-spacing: 1.5px;
+  text-shadow: 
+    -2.5px -2.5px 0 #000,  
+     2.5px -2.5px 0 #000,
+    -2.5px  2.5px 0 #000,
+     2.5px  2.5px 0 #000,
+     0px 4px 6px rgba(0,0,0,0.5);
+  transform: rotate(-22deg) scaleX(1.3);
+  font-family: var(--font-display);
 }
 
 /* Color Announcement Bar */
@@ -1276,22 +1192,13 @@ body {
 
 .player-hand {
   display: flex;
-  padding: 0 1rem;
+  gap: 0.75rem; /* nice spacing between cards to show full cards */
 }
 
-/* Overlapping hand margins for realistic fan layout */
+/* No overlapping hand margins - show full cards */
 .player-hand .card {
-  margin-right: -24px;
+  margin-right: 0;
   flex-shrink: 0;
-  transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-}
-
-.player-hand .card:hover {
-  transform: translateY(-25px) rotate(-3deg) scale(1.15) !important;
-  z-index: 100;
-  box-shadow: 0 15px 30px rgba(255,255,255,0.25), 0 0 20px #ffffff;
-  margin-right: -5px;
-  margin-left: 15px;
 }
 
 /* --- Modals Overlays --- */
@@ -1740,16 +1647,11 @@ body {
   }
 
   .player-hand {
-    padding: 0 0.5rem;
+    gap: 0.5rem;
   }
 
   .player-hand .card {
-    margin-right: -18px;
-  }
-  
-  .player-hand .card:hover {
-    margin-right: -2px !important;
-    margin-left: 12px !important;
+    margin-right: 0;
   }
 
   .hud-controls {

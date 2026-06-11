@@ -1,4 +1,4 @@
-const CACHE_NAME = 'uno-arena-cache-v6';
+const CACHE_NAME = 'uno-arena-cache-v4';
 const ASSETS_TO_CACHE = [
   '/',
   '/index.html',
