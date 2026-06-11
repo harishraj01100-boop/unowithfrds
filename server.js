@@ -271,6 +271,71 @@ io.on('connection', (socket) => {
     });
   });
 
+  // 2b. Create Room with Bots (Single Player)
+  socket.on('createRoomWithBots', ({ playerName, botCount, difficulty }) => {
+    const name = playerName.trim() || 'Player';
+    const roomCode = generateRoomCode();
+    
+    rooms[roomCode] = {
+      roomCode,
+      players: [
+        {
+          id: socket.id,
+          name: name,
+          hand: [],
+          isHost: true,
+          unoDeclared: false
+        }
+      ],
+      deck: [],
+      discardPile: [],
+      gameStarted: false,
+      gameFinished: false,
+      turnIndex: 0,
+      direction: 1,
+      winnerRankings: [],
+      currentSelectedColor: null,
+      hasDrawnThisTurn: false
+    };
+
+    const room = rooms[roomCode];
+
+    // Add opponent bots
+    for (let i = 1; i <= botCount; i++) {
+      room.players.push({
+        id: `bot_${i}`,
+        name: `Bot ${i}`,
+        hand: [],
+        isHost: false,
+        unoDeclared: false,
+        isBot: true,
+        difficulty: difficulty
+      });
+    }
+
+    currentRoomCode = roomCode;
+    currentUserName = name;
+    socket.join(roomCode);
+    
+    // Instantly transition human player to active screen
+    socket.emit('roomCreated', roomCode);
+
+    // Initialise game automatically
+    startGameInRoom(room);
+    broadcastGameState(room);
+    
+    // Send chat system message
+    const startCard = room.discardPile[room.discardPile.length - 1];
+    io.to(roomCode).emit('chatMessage', {
+      sender: 'System',
+      text: `Single Player vs ${botCount} Bots (${difficulty.toUpperCase()}) started! Top card is ${startCard.color.toUpperCase()} ${startCard.value.toUpperCase()}.`,
+      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    });
+
+    // Check if bot goes first
+    checkAndTriggerBotTurn(room);
+  });
+
   // 3. Send Chat Message
   socket.on('sendMessage', (text) => {
     if (!currentRoomCode || !currentUserName) return;
@@ -293,81 +358,17 @@ io.on('connection', (socket) => {
       return socket.emit('errorMsg', 'Need at least 2 players to start the game.');
     }
 
-    // Initialize Deck
-    room.deck = shuffle(createDeck());
-    room.discardPile = [];
-    room.winnerRankings = [];
-    room.gameStarted = true;
-    room.gameFinished = false;
-    room.turnIndex = 0;
-    room.direction = 1;
-    room.hasDrawnThisTurn = false;
-
-    // Deal 7 cards to each player
-    room.players.forEach(p => {
-      p.hand = drawCardFromDeck(room, 7);
-      p.unoDeclared = false;
-    });
-
-    // Draw starting card (cannot be Wild Draw 4)
-    let startCard = null;
-    let attempts = 0;
-    while (attempts < 10) {
-      const drawn = drawCardFromDeck(room, 1)[0];
-      if (drawn.value === 'draw4') {
-        // Put back and reshuffle
-        room.deck.push(drawn);
-        room.deck = shuffle(room.deck);
-        attempts++;
-      } else {
-        startCard = drawn;
-        break;
-      }
-    }
-    // Fallback if we somehow drew draw4 multiple times
-    if (!startCard) {
-      startCard = room.deck.find(c => c.value !== 'draw4');
-      room.deck = room.deck.filter(c => c.id !== startCard.id);
-    }
-
-    room.discardPile.push(startCard);
-    
-    // Set active color
-    if (startCard.color === 'wild') {
-      // Pick random starting color for wild card
-      const colors = ['red', 'blue', 'green', 'yellow'];
-      room.currentSelectedColor = colors[Math.floor(Math.random() * colors.length)];
-    } else {
-      room.currentSelectedColor = startCard.color;
-    }
-
-    // Handle initial special card effects
-    if (startCard.value === 'skip') {
-      room.turnIndex = getNextTurnIndex(room, 1);
-    } else if (startCard.value === 'reverse') {
-      room.direction = -1;
-      // In 2 player, reverse acts like skip, but turnIndex handles it:
-      if (room.players.length === 2) {
-        room.turnIndex = getNextTurnIndex(room, 1);
-      } else {
-        // For >2 players, reverse starting means host starts, but flow is CCW.
-        // We stay at index 0 (host).
-        room.turnIndex = 0;
-      }
-    } else if (startCard.value === 'draw2') {
-      // First player draws 2 cards and skips turn
-      const firstPlayer = room.players[room.turnIndex];
-      firstPlayer.hand.push(...drawCardFromDeck(room, 2));
-      room.turnIndex = getNextTurnIndex(room, 1);
-    }
-
+    startGameInRoom(room);
     broadcastGameState(room);
 
+    const startCard = room.discardPile[room.discardPile.length - 1];
     io.to(currentRoomCode).emit('chatMessage', {
       sender: 'System',
       text: `Game has started! Top card is ${startCard.color.toUpperCase()} ${startCard.value.toUpperCase()}.`,
       time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     });
+
+    checkAndTriggerBotTurn(room);
   });
 
   // 5. Draw Card
@@ -418,6 +419,8 @@ io.on('connection', (socket) => {
         text: systemText,
         time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
       });
+
+      checkAndTriggerBotTurn(room);
     } else {
       socket.emit('errorMsg', "No cards left in the deck.");
     }
@@ -565,6 +568,8 @@ io.on('connection', (socket) => {
 
     if (room.gameFinished) {
       io.to(currentRoomCode).emit('gameOver', room.winnerRankings);
+    } else {
+      checkAndTriggerBotTurn(room);
     }
   });
 
@@ -618,6 +623,8 @@ io.on('connection', (socket) => {
 
     if (room.gameFinished) {
       io.to(currentRoomCode).emit('gameOver', room.winnerRankings);
+    } else {
+      checkAndTriggerBotTurn(room);
     }
   });
 
@@ -688,6 +695,8 @@ io.on('connection', (socket) => {
 
     if (room.gameFinished) {
       io.to(currentRoomCode).emit('gameOver', room.winnerRankings);
+    } else {
+      checkAndTriggerBotTurn(room);
     }
   });
 
@@ -714,6 +723,8 @@ io.on('connection', (socket) => {
       text: `${activePlayer.name} passed their turn.`,
       time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     });
+
+    checkAndTriggerBotTurn(room);
   });
 
   // 8. Declare UNO
@@ -773,13 +784,22 @@ io.on('connection', (socket) => {
       return socket.emit('errorMsg', 'Only the host can restart the game.');
     }
 
+    if (room.botTimeout) {
+      clearTimeout(room.botTimeout);
+      room.botTimeout = null;
+    }
+
     room.gameStarted = false;
     room.gameFinished = false;
     room.winnerRankings = [];
+    
+    // Remove opponent bots
+    room.players = room.players.filter(p => !p.isBot);
     room.players.forEach(p => {
       p.hand = [];
       p.unoDeclared = false;
     });
+
     room.deck = [];
     room.discardPile = [];
     room.currentSelectedColor = null;
@@ -833,6 +853,7 @@ io.on('connection', (socket) => {
 
         // If no players left, clean up the entire room
         if (room.players.length === 0) {
+          if (room.botTimeout) clearTimeout(room.botTimeout);
           delete rooms[currentRoomCode];
         } else {
           // Assign a new host if needed
@@ -867,11 +888,536 @@ io.on('connection', (socket) => {
           }
 
           broadcastGameState(room);
+          if (room.gameStarted && !room.gameFinished) {
+            checkAndTriggerBotTurn(room);
+          }
         }
       }
     }
   });
 });
+
+// Helper: Core startGame initialization logic (reusable for bots and friends)
+function startGameInRoom(room) {
+  room.deck = shuffle(createDeck());
+  room.discardPile = [];
+  room.winnerRankings = [];
+  room.gameStarted = true;
+  room.gameFinished = false;
+  room.turnIndex = 0;
+  room.direction = 1;
+  room.hasDrawnThisTurn = false;
+
+  room.players.forEach(p => {
+    p.hand = drawCardFromDeck(room, 7);
+    p.unoDeclared = false;
+  });
+
+  let startCard = null;
+  let attempts = 0;
+  while (attempts < 10) {
+    const drawn = drawCardFromDeck(room, 1)[0];
+    if (drawn.value === 'draw4') {
+      room.deck.push(drawn);
+      room.deck = shuffle(room.deck);
+      attempts++;
+    } else {
+      startCard = drawn;
+      break;
+    }
+  }
+  if (!startCard) {
+    startCard = room.deck.find(c => c.value !== 'draw4');
+    room.deck = room.deck.filter(c => c.id !== startCard.id);
+  }
+
+  room.discardPile.push(startCard);
+  
+  if (startCard.color === 'wild') {
+    const colors = ['red', 'blue', 'green', 'yellow'];
+    room.currentSelectedColor = colors[Math.floor(Math.random() * colors.length)];
+  } else {
+    room.currentSelectedColor = startCard.color;
+  }
+
+  if (startCard.value === 'skip') {
+    room.turnIndex = getNextTurnIndex(room, 1);
+  } else if (startCard.value === 'reverse') {
+    room.direction = -1;
+    if (room.players.length === 2) {
+      room.turnIndex = getNextTurnIndex(room, 1);
+    } else {
+      room.turnIndex = 0;
+    }
+  } else if (startCard.value === 'draw2') {
+    const firstPlayer = room.players[room.turnIndex];
+    firstPlayer.hand.push(...drawCardFromDeck(room, 2));
+    room.turnIndex = getNextTurnIndex(room, 1);
+  }
+}
+
+// Bot Automation Engine
+function checkAndTriggerBotTurn(room) {
+  if (!room.gameStarted || room.gameFinished) return;
+
+  if (room.botTimeout) {
+    clearTimeout(room.botTimeout);
+    room.botTimeout = null;
+  }
+
+  if (room.pendingChallenge) {
+    const targetPlayer = room.players.find(p => p.id === room.pendingChallenge.targetId);
+    if (targetPlayer && targetPlayer.isBot) {
+      room.botTimeout = setTimeout(() => {
+        executeBotChallengeDecision(room, targetPlayer);
+      }, 1500 + Math.random() * 1000);
+    }
+    return;
+  }
+
+  const activePlayer = room.players[room.turnIndex];
+  if (!activePlayer || !activePlayer.isBot) return;
+
+  room.botTimeout = setTimeout(() => {
+    executeBotTurn(room, activePlayer);
+  }, 1500 + Math.random() * 1000);
+}
+
+function executeBotChallengeDecision(room, bot) {
+  if (!room.pendingChallenge) return;
+  const challenge = room.pendingChallenge;
+  
+  let shouldChallenge = false;
+  if (bot.difficulty === 'easy') {
+    shouldChallenge = Math.random() < 0.2;
+  } else if (bot.difficulty === 'medium') {
+    shouldChallenge = Math.random() < 0.4;
+  } else {
+    const playedByPlayer = room.players.find(p => p.id === challenge.playedById);
+    if (playedByPlayer && playedByPlayer.hand.length === 0) {
+      shouldChallenge = true;
+    } else {
+      shouldChallenge = Math.random() < 0.5;
+    }
+  }
+
+  const targetPlayer = room.players.find(p => p.id === challenge.targetId);
+  const playedByPlayer = room.players.find(p => p.id === challenge.playedById);
+  if (!targetPlayer || !playedByPlayer) return;
+
+  if (shouldChallenge) {
+    const wasIllegal = challenge.wasIllegal;
+    room.pendingChallenge = null;
+    let nextTurnOffset = 1;
+    let systemText = "";
+
+    if (wasIllegal) {
+      const drawn = drawCardFromDeck(room, 4);
+      playedByPlayer.hand.push(...drawn);
+      playedByPlayer.unoDeclared = false;
+      systemText = `🎯 Bot Challenge SUCCESSFUL! ${playedByPlayer.name} played Wild Draw Four illegally. ${playedByPlayer.name} draws 4 cards!`;
+      nextTurnOffset = 1;
+    } else {
+      const drawn = drawCardFromDeck(room, 6);
+      targetPlayer.hand.push(...drawn);
+      targetPlayer.unoDeclared = false;
+      systemText = `❌ Bot Challenge FAILED! ${playedByPlayer.name} played Wild Draw Four legally. ${targetPlayer.name} draws 6 cards and misses their turn!`;
+      nextTurnOffset = 2;
+    }
+
+    if (playedByPlayer.hand.length === 0) {
+      if (!room.winnerRankings.includes(playedByPlayer.name)) {
+        room.winnerRankings.push(playedByPlayer.name);
+        systemText += ` 🏆 ${playedByPlayer.name} has finished all their cards!`;
+      }
+    }
+
+    checkGameFinished(room);
+
+    if (!room.gameFinished) {
+      room.turnIndex = getNextTurnIndex(room, nextTurnOffset);
+    }
+
+    broadcastGameState(room);
+
+    io.to(room.roomCode).emit('chatMessage', {
+      sender: 'System',
+      text: systemText,
+      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    });
+
+    if (room.gameFinished) {
+      io.to(room.roomCode).emit('gameOver', room.winnerRankings);
+    } else {
+      checkAndTriggerBotTurn(room);
+    }
+  } else {
+    const drawn = drawCardFromDeck(room, 4);
+    targetPlayer.hand.push(...drawn);
+    targetPlayer.unoDeclared = false;
+    room.pendingChallenge = null;
+
+    let systemText = `${targetPlayer.name} accepted the WILD DRAW FOUR, drew 4 cards, and missed their turn.`;
+
+    if (playedByPlayer.hand.length === 0) {
+      if (!room.winnerRankings.includes(playedByPlayer.name)) {
+        room.winnerRankings.push(playedByPlayer.name);
+        systemText += ` 🏆 ${playedByPlayer.name} has finished all their cards!`;
+      }
+    }
+
+    checkGameFinished(room);
+
+    if (!room.gameFinished) {
+      room.turnIndex = getNextTurnIndex(room, 2);
+    }
+
+    broadcastGameState(room);
+
+    io.to(room.roomCode).emit('chatMessage', {
+      sender: 'System',
+      text: systemText,
+      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    });
+
+    if (room.gameFinished) {
+      io.to(room.roomCode).emit('gameOver', room.winnerRankings);
+    } else {
+      checkAndTriggerBotTurn(room);
+    }
+  }
+}
+
+function executeBotTurn(room, bot) {
+  if (!room.gameStarted || room.gameFinished || room.pendingChallenge) return;
+
+  const topCard = room.discardPile[room.discardPile.length - 1];
+  const activeColor = room.currentSelectedColor;
+
+  const playable = bot.hand.filter(card => 
+    card.color === 'wild' ||
+    card.color === activeColor ||
+    card.value.toString() === topCard.value.toString()
+  );
+
+  if (playable.length > 0) {
+    let selectedCard = null;
+
+    if (bot.difficulty === 'easy') {
+      selectedCard = playable[0];
+    } else if (bot.difficulty === 'medium') {
+      const actions = playable.filter(c => ['skip', 'reverse', 'draw2'].includes(c.value));
+      selectedCard = actions.length > 0 ? actions[0] : playable[0];
+    } else {
+      const nextPlayerIndex = getNextTurnIndex(room, 1);
+      const nextPlayer = room.players[nextPlayerIndex];
+      const isNextPlayerTargetable = nextPlayer && nextPlayer.hand.length <= 2;
+
+      const skipsAndDraws = playable.filter(c => ['skip', 'draw2', 'draw4'].includes(c.value));
+      
+      if (isNextPlayerTargetable && skipsAndDraws.length > 0) {
+        const targetActions = skipsAndDraws.filter(c => c.value !== 'draw4');
+        selectedCard = targetActions.length > 0 ? targetActions[0] : skipsAndDraws[0];
+      } else {
+        const nonDraw4 = playable.filter(c => c.value !== 'draw4');
+        selectedCard = nonDraw4.length > 0 ? nonDraw4[0] : playable[0];
+      }
+    }
+
+    const cardIndex = bot.hand.findIndex(c => c.id === selectedCard.id);
+    bot.hand.splice(cardIndex, 1);
+    
+    let wildColor = null;
+    if (selectedCard.color === 'wild') {
+      const colorCounts = { red: 0, blue: 0, green: 0, yellow: 0 };
+      bot.hand.forEach(c => {
+        if (colorCounts[c.color] !== undefined) colorCounts[c.color]++;
+      });
+      let maxColor = 'red';
+      let maxCount = -1;
+      for (let color in colorCounts) {
+        if (colorCounts[color] > maxCount) {
+          maxCount = colorCounts[color];
+          maxColor = color;
+        }
+      }
+      wildColor = maxColor;
+    }
+
+    if (selectedCard.value === 'draw4') {
+      const activeColorBeforePlay = room.currentSelectedColor;
+      const wasIllegal = bot.hand.some(c => c.color === activeColorBeforePlay);
+
+      selectedCard.color = wildColor;
+      room.discardPile.push(selectedCard);
+      room.currentSelectedColor = wildColor;
+      room.hasDrawnThisTurn = false;
+
+      const targetPlayerIndex = getNextTurnIndex(room, 1);
+      const targetPlayer = room.players[targetPlayerIndex];
+
+      room.pendingChallenge = {
+        playedById: bot.id,
+        playedByName: bot.name,
+        targetId: targetPlayer.id,
+        targetName: targetPlayer.name,
+        wasIllegal: wasIllegal,
+        wildColor: wildColor,
+        prevSelectedColor: activeColorBeforePlay
+      };
+
+      handleBotUnoDeclaration(room, bot);
+      broadcastGameState(room);
+
+      io.to(room.roomCode).emit('chatMessage', {
+        sender: 'System',
+        text: `${bot.name} played WILD DRAW FOUR choosing ${wildColor.toUpperCase()}. Waiting for ${targetPlayer.name} to Accept or Challenge!`,
+        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+      });
+
+      checkAndTriggerBotTurn(room);
+      return;
+    }
+
+    room.discardPile.push(selectedCard);
+    
+    if (selectedCard.color === 'wild') {
+      selectedCard.color = wildColor;
+      room.currentSelectedColor = wildColor;
+    } else {
+      room.currentSelectedColor = selectedCard.color;
+    }
+
+    let nextTurnOffset = 1;
+    let drawCountForNext = 0;
+    let systemText = `${bot.name} played ${selectedCard.color.toUpperCase()} ${selectedCard.value.toUpperCase()}.`;
+
+    room.hasDrawnThisTurn = false;
+
+    if (selectedCard.value === 'skip') {
+      nextTurnOffset = 2;
+      systemText += ` Next player's turn is skipped.`;
+    } else if (selectedCard.value === 'reverse') {
+      room.direction *= -1;
+      systemText += ` Play direction reversed.`;
+      const activePlayersCount = room.players.filter(p => p.hand.length > 0).length;
+      if (activePlayersCount === 2) {
+        nextTurnOffset = 2;
+      }
+    } else if (selectedCard.value === 'draw2') {
+      drawCountForNext = 2;
+      nextTurnOffset = 2;
+      systemText += ` Next player draws 2 cards and skips their turn.`;
+    }
+
+    handleBotUnoDeclaration(room, bot);
+
+    const hasFinished = (bot.hand.length === 0);
+    if (hasFinished) {
+      if (!room.winnerRankings.includes(bot.name)) {
+        room.winnerRankings.push(bot.name);
+        systemText += ` 🏆 ${bot.name} has finished all their cards!`;
+      }
+    }
+
+    if (drawCountForNext > 0) {
+      const targetPlayerIndex = getNextTurnIndex(room, 1);
+      const targetPlayer = room.players[targetPlayerIndex];
+      const drawn = drawCardFromDeck(room, drawCountForNext);
+      targetPlayer.hand.push(...drawn);
+      targetPlayer.unoDeclared = false;
+    }
+
+    checkGameFinished(room);
+
+    if (!room.gameFinished) {
+      room.turnIndex = getNextTurnIndex(room, nextTurnOffset);
+    }
+
+    broadcastGameState(room);
+
+    io.to(room.roomCode).emit('chatMessage', {
+      sender: 'System',
+      text: systemText,
+      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    });
+
+    if (room.gameFinished) {
+      io.to(room.roomCode).emit('gameOver', room.winnerRankings);
+    } else {
+      checkAndTriggerBotTurn(room);
+    }
+  } else {
+    const drawnCards = drawCardFromDeck(room, 1);
+    if (drawnCards.length > 0) {
+      const drawnCard = drawnCards[0];
+      bot.hand.push(drawnCard);
+      bot.unoDeclared = false;
+
+      const isPlayable = (
+        drawnCard.color === 'wild' ||
+        drawnCard.color === room.currentSelectedColor ||
+        drawnCard.value.toString() === topCard.value.toString()
+      );
+
+      let systemText = "";
+
+      if (isPlayable) {
+        let wildColor = null;
+        if (drawnCard.color === 'wild') {
+          const colorCounts = { red: 0, blue: 0, green: 0, yellow: 0 };
+          bot.hand.forEach(c => {
+            if (colorCounts[c.color] !== undefined) colorCounts[c.color]++;
+          });
+          let maxColor = 'red';
+          let maxCount = -1;
+          for (let color in colorCounts) {
+            if (colorCounts[color] > maxCount) {
+              maxCount = colorCounts[color];
+              maxColor = color;
+            }
+          }
+          wildColor = maxColor;
+        }
+
+        const cardIndex = bot.hand.findIndex(c => c.id === drawnCard.id);
+        bot.hand.splice(cardIndex, 1);
+
+        if (drawnCard.value === 'draw4') {
+          const activeColorBeforePlay = room.currentSelectedColor;
+          const wasIllegal = bot.hand.some(c => c.color === activeColorBeforePlay);
+
+          drawnCard.color = wildColor;
+          room.discardPile.push(drawnCard);
+          room.currentSelectedColor = wildColor;
+          room.hasDrawnThisTurn = false;
+
+          const targetPlayerIndex = getNextTurnIndex(room, 1);
+          const targetPlayer = room.players[targetPlayerIndex];
+
+          room.pendingChallenge = {
+            playedById: bot.id,
+            playedByName: bot.name,
+            targetId: targetPlayer.id,
+            targetName: targetPlayer.name,
+            wasIllegal: wasIllegal,
+            wildColor: wildColor,
+            prevSelectedColor: activeColorBeforePlay
+          };
+
+          handleBotUnoDeclaration(room, bot);
+          broadcastGameState(room);
+
+          io.to(room.roomCode).emit('chatMessage', {
+            sender: 'System',
+            text: `${bot.name} drew and played WILD DRAW FOUR choosing ${wildColor.toUpperCase()}. Waiting for ${targetPlayer.name} to Accept or Challenge!`,
+            time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+          });
+
+          checkAndTriggerBotTurn(room);
+          return;
+        }
+
+        room.discardPile.push(drawnCard);
+        
+        if (drawnCard.color === 'wild') {
+          drawnCard.color = wildColor;
+          room.currentSelectedColor = wildColor;
+        } else {
+          room.currentSelectedColor = drawnCard.color;
+        }
+
+        let nextTurnOffset = 1;
+        let drawCountForNext = 0;
+        systemText = `${bot.name} drew a playable card and played it: ${drawnCard.color.toUpperCase()} ${drawnCard.value.toUpperCase()}.`;
+
+        room.hasDrawnThisTurn = false;
+
+        if (drawnCard.value === 'skip') {
+          nextTurnOffset = 2;
+          systemText += ` Next player's turn is skipped.`;
+        } else if (drawnCard.value === 'reverse') {
+          room.direction *= -1;
+          systemText += ` Play direction reversed.`;
+          const activePlayersCount = room.players.filter(p => p.hand.length > 0).length;
+          if (activePlayersCount === 2) {
+            nextTurnOffset = 2;
+          }
+        } else if (drawnCard.value === 'draw2') {
+          drawCountForNext = 2;
+          nextTurnOffset = 2;
+          systemText += ` Next player draws 2 cards and skips their turn.`;
+        }
+
+        handleBotUnoDeclaration(room, bot);
+
+        if (drawCountForNext > 0) {
+          const targetPlayerIndex = getNextTurnIndex(room, 1);
+          const targetPlayer = room.players[targetPlayerIndex];
+          const drawn = drawCardFromDeck(room, drawCountForNext);
+          targetPlayer.hand.push(...drawn);
+          targetPlayer.unoDeclared = false;
+        }
+
+        checkGameFinished(room);
+
+        if (!room.gameFinished) {
+          room.turnIndex = getNextTurnIndex(room, nextTurnOffset);
+        }
+
+        broadcastGameState(room);
+
+        io.to(room.roomCode).emit('chatMessage', {
+          sender: 'System',
+          text: systemText,
+          time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        });
+
+        if (room.gameFinished) {
+          io.to(room.roomCode).emit('gameOver', room.winnerRankings);
+        } else {
+          checkAndTriggerBotTurn(room);
+        }
+      } else {
+        room.hasDrawnThisTurn = false;
+        systemText = `${bot.name} drew a card. Turn passes to the next player.`;
+        room.turnIndex = getNextTurnIndex(room, 1);
+
+        broadcastGameState(room);
+
+        io.to(room.roomCode).emit('chatMessage', {
+          sender: 'System',
+          text: systemText,
+          time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        });
+
+        checkAndTriggerBotTurn(room);
+      }
+    }
+  }
+}
+
+function handleBotUnoDeclaration(room, bot) {
+  if (bot.hand.length === 1) {
+    let declares = false;
+    if (bot.difficulty === 'easy') {
+      declares = Math.random() < 0.5;
+    } else if (bot.difficulty === 'medium') {
+      declares = Math.random() < 0.8;
+    } else {
+      declares = true;
+    }
+    
+    if (declares) {
+      bot.unoDeclared = true;
+      io.to(room.roomCode).emit('chatMessage', {
+        sender: 'System',
+        text: `${bot.name} has declared UNO!`,
+        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+      });
+    }
+  }
+}
 
 // Start Express + HTTP Server
 server.listen(PORT, () => {

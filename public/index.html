@@ -47,7 +47,7 @@
     <section id="lobby-screen" class="view-panel active">
       <div class="panel-header">
         <h2>Enter the Arena</h2>
-        <p>Create a private room or join an existing game room</p>
+        <p>Choose a game mode and start playing</p>
       </div>
       
       <div class="form-group">
@@ -60,29 +60,99 @@
 
       <hr class="separator">
 
-      <div class="lobby-actions">
-        <!-- Create Room Column -->
-        <div class="action-card">
-          <h3>Create a New Room</h3>
-          <p>Start a new game session and invite your friends</p>
-          <button id="create-room-btn" class="btn btn-primary btn-glow">
-            <i class="fa-solid fa-plus-circle"></i> Create Room
+      <!-- LOBBY MAIN MENU: MODE SELECTION -->
+      <div id="lobby-main-menu" class="lobby-menu-grid">
+        <div class="menu-card" id="menu-play-friends">
+          <i class="fa-solid fa-users menu-card-icon friends-glow"></i>
+          <h3>Play with Friends</h3>
+          <p>Create a room, share code, and play online multiplayer.</p>
+          <button class="btn btn-primary btn-glow btn-sm" style="margin-top: auto; pointer-events: none;">👥 Multiplayer</button>
+        </div>
+        <div class="menu-card" id="menu-play-computer">
+          <i class="fa-solid fa-robot menu-card-icon bot-glow"></i>
+          <h3>Play with Computer</h3>
+          <p>Play offline card match against smart AI bots.</p>
+          <button class="btn btn-accent btn-glow btn-sm" style="margin-top: auto; pointer-events: none;">🤖 VS Computer</button>
+        </div>
+      </div>
+
+      <!-- PLAY WITH FRIENDS SUB-PANEL -->
+      <div id="lobby-friends-panel" class="menu-sub-panel hidden">
+        <div class="panel-back-row">
+          <button id="back-to-menu-from-friends" class="btn-back">
+            <i class="fa-solid fa-arrow-left"></i> Back to Main Menu
           </button>
         </div>
 
-        <!-- Join Room Column -->
-        <div class="action-card">
-          <h3>Join Existing Room</h3>
-          <p>Enter a 6-character room code to join</p>
-          <div class="form-group">
-            <div class="input-wrapper">
-              <i class="fa-solid fa-key input-icon"></i>
-              <input type="text" id="room-code-input" placeholder="e.g. A7K9P2" maxlength="6" autocomplete="off" style="text-transform: uppercase;">
-            </div>
+        <div class="lobby-actions">
+          <!-- Create Room Column -->
+          <div class="action-card">
+            <h3>Create a New Room</h3>
+            <p>Start a new game session and invite your friends</p>
+            <button id="create-room-btn" class="btn btn-primary btn-glow">
+              <i class="fa-solid fa-plus-circle"></i> Create Room
+            </button>
           </div>
-          <button id="join-room-btn" class="btn btn-accent btn-glow">
-            <i class="fa-solid fa-sign-in-alt"></i> Join Room
+
+          <!-- Join Room Column -->
+          <div class="action-card">
+            <h3>Join Existing Room</h3>
+            <p>Enter a 6-character room code to join</p>
+            <div class="form-group">
+              <div class="input-wrapper">
+                <i class="fa-solid fa-key input-icon"></i>
+                <input type="text" id="room-code-input" placeholder="e.g. A7K9P2" maxlength="6" autocomplete="off" style="text-transform: uppercase;">
+              </div>
+            </div>
+            <button id="join-room-btn" class="btn btn-accent btn-glow">
+              <i class="fa-solid fa-sign-in-alt"></i> Join Room
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- PLAY WITH COMPUTER SUB-PANEL -->
+      <div id="lobby-computer-panel" class="menu-sub-panel hidden">
+        <div class="panel-back-row">
+          <button id="back-to-menu-from-comp" class="btn-back">
+            <i class="fa-solid fa-arrow-left"></i> Back to Main Menu
           </button>
+        </div>
+
+        <div class="bot-settings-container">
+          <div class="bot-settings-card">
+            <h3>Single Player Configuration</h3>
+            
+            <div class="form-group">
+              <label for="bot-count-select">Number of Opponent Bots</label>
+              <div class="input-wrapper">
+                <i class="fa-solid fa-robot input-icon"></i>
+                <select id="bot-count-select" class="select-field">
+                  <option value="1">1 Bot (2-Player Match)</option>
+                  <option value="2">2 Bots (3-Player Match)</option>
+                  <option value="3" selected>3 Bots (4-Player Match)</option>
+                  <option value="4">4 Bots (5-Player Match)</option>
+                  <option value="5">5 Bots (6-Player Match)</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="bot-difficulty-select">AI Opponent Level</label>
+              <div class="input-wrapper">
+                <i class="fa-solid fa-brain input-icon"></i>
+                <select id="bot-difficulty-select" class="select-field">
+                  <option value="easy">Easy (Plays first card, no strategy)</option>
+                  <option value="medium" selected>Medium (Plays action cards, smart wildcards)</option>
+                  <option value="hard">Hard (Tracks colors, saves Wild +4, targets leaders)</option>
+                </select>
+              </div>
+            </div>
+
+            <button id="start-computer-game-btn" class="btn btn-accent btn-glow" style="width: 100%; margin-top: 1rem; padding: 0.9rem;">
+              <i class="fa-solid fa-circle-play"></i> Start Bot Game
+            </button>
+          </div>
         </div>
       </div>
 

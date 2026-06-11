@@ -156,6 +156,64 @@ const roomCodeInput = document.getElementById('room-code-input');
 const createRoomBtn = document.getElementById('create-room-btn');
 const joinRoomBtn = document.getElementById('join-room-btn');
 
+// DOM Elements - Lobby Sub-panels & Menu Clicks
+const lobbyMainMenu = document.getElementById('lobby-main-menu');
+const lobbyFriendsPanel = document.getElementById('lobby-friends-panel');
+const lobbyComputerPanel = document.getElementById('lobby-computer-panel');
+const menuPlayFriends = document.getElementById('menu-play-friends');
+const menuPlayComputer = document.getElementById('menu-play-computer');
+const backToMenuFromFriends = document.getElementById('back-to-menu-from-friends');
+const backToMenuFromComp = document.getElementById('back-to-menu-from-comp');
+const botCountSelect = document.getElementById('bot-count-select');
+const botDifficultySelect = document.getElementById('bot-difficulty-select');
+const startComputerGameBtn = document.getElementById('start-computer-game-btn');
+
+// --- Lobby Menu Navigation ---
+if (menuPlayFriends && lobbyMainMenu && lobbyFriendsPanel) {
+  menuPlayFriends.addEventListener('click', () => {
+    const name = playerNameInput.value.trim();
+    if (!name) return alert('Please enter a name first!');
+    lobbyMainMenu.classList.add('hidden');
+    lobbyFriendsPanel.classList.remove('hidden');
+  });
+}
+
+if (menuPlayComputer && lobbyMainMenu && lobbyComputerPanel) {
+  menuPlayComputer.addEventListener('click', () => {
+    const name = playerNameInput.value.trim();
+    if (!name) return alert('Please enter a name first!');
+    lobbyMainMenu.classList.add('hidden');
+    lobbyComputerPanel.classList.remove('hidden');
+  });
+}
+
+if (backToMenuFromFriends && lobbyMainMenu && lobbyFriendsPanel) {
+  backToMenuFromFriends.addEventListener('click', () => {
+    lobbyFriendsPanel.classList.add('hidden');
+    lobbyMainMenu.classList.remove('hidden');
+  });
+}
+
+if (backToMenuFromComp && lobbyMainMenu && lobbyComputerPanel) {
+  backToMenuFromComp.addEventListener('click', () => {
+    lobbyComputerPanel.classList.add('hidden');
+    lobbyMainMenu.classList.remove('hidden');
+  });
+}
+
+if (startComputerGameBtn) {
+  startComputerGameBtn.addEventListener('click', () => {
+    const name = playerNameInput.value.trim();
+    if (!name) return alert('Please enter a name first!');
+    localStorage.setItem('uno_arena_player_name', name);
+    
+    const botCount = parseInt(botCountSelect.value, 10);
+    const difficulty = botDifficultySelect.value;
+    
+    socket.emit('createRoomWithBots', { playerName: name, botCount, difficulty });
+  });
+}
+
 // DOM Elements - Waiting Room
 const lobbyRoomCode = document.getElementById('lobby-room-code');
 const copyCodeBtn = document.getElementById('copy-code-btn');
