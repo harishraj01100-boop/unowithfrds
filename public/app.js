@@ -34,6 +34,61 @@ function playSound(soundKey) {
   }
 }
 
+// Global AudioContext for synthesized effects
+let audioCtx = null;
+
+function getAudioContext() {
+  try {
+    if (!audioCtx) {
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+    if (audioCtx.state === 'suspended') {
+      audioCtx.resume();
+    }
+    return audioCtx;
+  } catch (err) {
+    console.warn('Could not initialize AudioContext:', err);
+    return null;
+  }
+}
+
+// Helper: Play synthesized beep sound dynamically (low latency, works offline)
+function playSynthBeep(type) {
+  if (soundMuted) return;
+  try {
+    const ctx = getAudioContext();
+    if (!ctx) return;
+    
+    const osc = ctx.createOscillator();
+    const gainNode = ctx.createGain();
+    
+    osc.connect(gainNode);
+    gainNode.connect(ctx.destination);
+    
+    const now = ctx.currentTime;
+    
+    if (type === 'play') {
+      // Crisp, high-pitched "put card" beep: 650Hz, short duration (0.08s)
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(650, now);
+      gainNode.gain.setValueAtTime(0.08, now);
+      gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
+      osc.start(now);
+      osc.stop(now + 0.08);
+    } else if (type === 'draw') {
+      // Softer, lower-pitched "take card" beep: 450Hz, slightly longer duration (0.15s)
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(450, now);
+      gainNode.gain.setValueAtTime(0.08, now);
+      gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
+      osc.start(now);
+      osc.stop(now + 0.15);
+    }
+  } catch (err) {
+    console.warn('Synth beep play failed:', err);
+  }
+}
+
 // Helper: Trigger vibration safely
 function triggerVibrate(pattern = 100) {
   if ('vibrate' in navigator) {
@@ -51,6 +106,18 @@ let audioUnlocked = false;
 function unlockAudio() {
   if (audioUnlocked) return;
   console.log('User gesture detected. Unlocking audio/vibration APIs...');
+  
+  // Unlock dynamic Web Audio API context
+  try {
+    const ctx = getAudioContext();
+    if (ctx) {
+      ctx.resume().then(() => {
+        console.log('Web Audio Context successfully resumed!');
+      });
+    }
+  } catch (err) {
+    console.log('Web Audio Context unlock failed:', err);
+  }
   
   // Play a single short sound (the play/tap sound) to unlock page-wide media playback
   if (sounds.play) {
@@ -163,6 +230,7 @@ if (soundToggleBtn) {
     updateSoundToggleButton();
     if (!soundMuted) {
       playSound('play');
+      playSynthBeep('play');
     }
   });
 }
@@ -370,11 +438,13 @@ function bindSocketEvents() {
 
       if (msg.text.includes('drew a card')) {
         playSound('draw');
+        playSynthBeep('draw');
         if (isMyAction) {
           triggerVibrate(80);
         }
       } else if (msg.text.includes('played')) {
         playSound('play');
+        playSynthBeep('play');
         if (isMyAction) {
           triggerVibrate(60);
         }
