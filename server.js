@@ -492,6 +492,7 @@ io.on('connection', (socket) => {
         time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
       });
 
+      checkAndTriggerBotTurn(room);
       return;
     }
 

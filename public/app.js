@@ -800,8 +800,12 @@ function bindSocketEvents() {
           triggerVibrate(60);
           
           if (card.color === 'wild') {
-            pendingWildCardId = card.id;
-            colorPickerModal.classList.add('active');
+            if (mySelf && mySelf.hand && mySelf.hand.length === 1) {
+              socket.emit('playCard', { cardId: card.id, wildColor: 'red' });
+            } else {
+              pendingWildCardId = card.id;
+              colorPickerModal.classList.add('active');
+            }
           } else {
             socket.emit('playCard', { cardId: card.id, wildColor: null });
           }
