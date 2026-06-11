@@ -928,7 +928,7 @@ window.triggerCatchUno = function(targetPlayerId) {
 // Card HTML Generator
 function createCardElement(card, isPlayable, onClickHandler) {
   const cardDiv = document.createElement('div');
-  cardDiv.className = `card ${card.color}`;
+  cardDiv.className = `card ${card.color} value-${card.value}`;
   
   if (isPlayable) {
     cardDiv.classList.add('playable');
