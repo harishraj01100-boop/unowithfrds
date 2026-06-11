@@ -1173,7 +1173,6 @@ body {
   scrollbar-color: rgba(255,255,255,0.1) transparent;
   width: 100%;
   min-width: 0;
-  -webkit-overflow-scrolling: touch; /* Smooth mobile momentum scrolling */
 }
 
 /* Custom Scrollbar for Hand scroll container */
@@ -1195,7 +1194,6 @@ body {
 .player-hand {
   display: flex;
   gap: 0.75rem; /* nice spacing between cards to show full cards */
-  flex-shrink: 0; /* Prevents nested flex container from squishing cards and overriding on mobile */
 }
 
 /* No overlapping hand margins - show full cards */
@@ -1651,12 +1649,10 @@ body {
 
   .player-hand {
     gap: 0.5rem;
-    flex-shrink: 0;
   }
 
   .player-hand .card {
     margin-right: 0;
-    flex-shrink: 0;
   }
 
   .hud-controls {
