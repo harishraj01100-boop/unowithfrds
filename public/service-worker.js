@@ -1,4 +1,4 @@
-const CACHE_NAME = 'uno-arena-cache-v5';
+const CACHE_NAME = 'uno-arena-cache-v6';
 const ASSETS_TO_CACHE = [
   '/',
   '/index.html',
@@ -27,7 +27,9 @@ self.addEventListener('install', (event) => {
     caches.open(CACHE_NAME)
       .then((cache) => {
         console.log('Opened cache and adding static assets');
-        return cache.addAll(ASSETS_TO_CACHE);
+        // Force network fetch to bypass browser HTTP cache
+        const cacheRequests = ASSETS_TO_CACHE.map(url => new Request(url, { cache: 'reload' }));
+        return cache.addAll(cacheRequests);
       })
       .then(() => self.skipWaiting())
   );
@@ -57,7 +59,7 @@ self.addEventListener('fetch', (event) => {
   }
 
   event.respondWith(
-    caches.match(event.request)
+    caches.match(event.request, { ignoreSearch: true })
       .then((cachedResponse) => {
         // If resource is in cache, return it and fetch fresh version in the background
         if (cachedResponse) {
@@ -78,3 +80,4 @@ self.addEventListener('fetch', (event) => {
       })
   );
 });
+
