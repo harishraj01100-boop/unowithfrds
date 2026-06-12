@@ -807,7 +807,7 @@ body {
   justify-content: space-between;
   padding: 0.35rem 0.45rem;
   position: relative;
-  z-index: 1; /* Isolates stacking context to prevent child elements bleeding onto adjacent cards */
+  z-index: 1; /* Establishes a local stacking context so corner symbols don't bleed onto overlapping siblings */
   box-shadow: 0 5px 12px rgba(0, 0, 0, 0.45);
   transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
   user-select: none;
