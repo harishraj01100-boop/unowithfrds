@@ -795,6 +795,7 @@ body {
   font-size: 0.75rem;
   font-weight: bold;
   color: #fff;
+  z-index: 10;
 }
 
 /* --- Card Styles (Official Realistic Design) --- */

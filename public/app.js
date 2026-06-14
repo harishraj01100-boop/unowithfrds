@@ -543,6 +543,12 @@ function bindSocketEvents() {
     }
 
     chatMessages.appendChild(messageElement);
+    
+    // Limit chat messages in the DOM to the last 100 to prevent performance lag over time
+    while (chatMessages.children.length > 100) {
+      chatMessages.removeChild(chatMessages.firstChild);
+    }
+    
     chatMessages.scrollTop = chatMessages.scrollHeight;
 
     if (!isSystem) {
@@ -584,7 +590,7 @@ function bindSocketEvents() {
     localGameStarted = state.gameStarted;
 
     currentGameState = state;
-    console.log('State updated:', state);
+    // console.log('State updated:', state);
 
     // Detect if a card was played (on turn change or discard update)
     if (!state.gameStarted) {

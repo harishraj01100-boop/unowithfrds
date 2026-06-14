@@ -68,10 +68,13 @@ function createDeck() {
 
 // Helper: Shuffle deck (Fisher-Yates algorithm)
 function shuffle(deck) {
-  const shuffled = [...deck];
-  for (let i = shuffled.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  let shuffled = [...deck];
+  // 3-pass shuffle for thorough randomness
+  for (let pass = 0; pass < 3; pass++) {
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
   }
   return shuffled;
 }
@@ -857,8 +860,9 @@ io.on('connection', (socket) => {
           time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
         });
 
-        // If no players left, clean up the entire room
-        if (room.players.length === 0) {
+        // If no human players left, clean up the entire room
+        const humanPlayers = room.players.filter(p => !p.isBot);
+        if (humanPlayers.length === 0) {
           if (room.botTimeout) clearTimeout(room.botTimeout);
           delete rooms[currentRoomCode];
         } else {
