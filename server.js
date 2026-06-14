@@ -68,13 +68,10 @@ function createDeck() {
 
 // Helper: Shuffle deck (Fisher-Yates algorithm)
 function shuffle(deck) {
-  let shuffled = [...deck];
-  // Triple shuffle for thorough randomness
-  for (let shuffleCount = 0; shuffleCount < 3; shuffleCount++) {
-    for (let i = shuffled.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-    }
+  const shuffled = [...deck];
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
   }
   return shuffled;
 }
@@ -394,7 +391,8 @@ io.on('connection', (socket) => {
       activePlayer.unoDeclared = false; // Reset UNO status when drawing
       
       const topCard = room.discardPile[room.discardPile.length - 1];
-      const isPlayable = (
+      const isPowerCard = ['skip', 'reverse', 'draw2', 'wild', 'draw4'].includes(drawnCard.value.toString());
+      const isPlayable = !isPowerCard && (
         drawnCard.color === 'wild' ||
         drawnCard.color === room.currentSelectedColor ||
         drawnCard.value.toString() === topCard.value.toString()
@@ -409,7 +407,11 @@ io.on('connection', (socket) => {
       } else {
         // Not playable: Turn automatically passes to next player
         room.hasDrawnThisTurn = false;
-        systemText = `${activePlayer.name} drew a card (not playable). Turn passes to the next player.`;
+        if (isPowerCard) {
+          systemText = `${activePlayer.name} drew a power card (${drawnCard.color.toUpperCase()} ${drawnCard.value.toUpperCase()}). Power cards cannot be played immediately after drawing. Turn passes to the next player.`;
+        } else {
+          systemText = `${activePlayer.name} drew a card (not playable). Turn passes to the next player.`;
+        }
         room.turnIndex = getNextTurnIndex(room, 1);
       }
       
@@ -944,13 +946,20 @@ function startGameInRoom(room) {
     room.currentSelectedColor = startCard.color;
   }
 
-  // If the starting card is a Reverse, it changes the direction of play.
-  // Other starting power card action effects (Skip, Draw Two) are ignored,
-  // meaning no players are skipped or forced to draw cards, and the host starts.
-  if (startCard.value === 'reverse') {
+  if (startCard.value === 'skip') {
+    room.turnIndex = getNextTurnIndex(room, 1);
+  } else if (startCard.value === 'reverse') {
     room.direction = -1;
+    if (room.players.length === 2) {
+      room.turnIndex = getNextTurnIndex(room, 1);
+    } else {
+      room.turnIndex = 0;
+    }
+  } else if (startCard.value === 'draw2') {
+    const firstPlayer = room.players[room.turnIndex];
+    firstPlayer.hand.push(...drawCardFromDeck(room, 2));
+    room.turnIndex = getNextTurnIndex(room, 1);
   }
-  room.turnIndex = 0;
 }
 
 // Bot Automation Engine
@@ -1251,7 +1260,8 @@ function executeBotTurn(room, bot) {
       bot.hand.push(drawnCard);
       bot.unoDeclared = false;
 
-      const isPlayable = (
+      const isPowerCard = ['skip', 'reverse', 'draw2', 'wild', 'draw4'].includes(drawnCard.value.toString());
+      const isPlayable = !isPowerCard && (
         drawnCard.color === 'wild' ||
         drawnCard.color === room.currentSelectedColor ||
         drawnCard.value.toString() === topCard.value.toString()
@@ -1377,7 +1387,11 @@ function executeBotTurn(room, bot) {
         }
       } else {
         room.hasDrawnThisTurn = false;
-        systemText = `${bot.name} drew a card. Turn passes to the next player.`;
+        if (isPowerCard) {
+          systemText = `${bot.name} drew a power card (${drawnCard.color.toUpperCase()} ${drawnCard.value.toUpperCase()}). Power cards cannot be played immediately after drawing. Turn passes to the next player.`;
+        } else {
+          systemText = `${bot.name} drew a card. Turn passes to the next player.`;
+        }
         room.turnIndex = getNextTurnIndex(room, 1);
 
         broadcastGameState(room);

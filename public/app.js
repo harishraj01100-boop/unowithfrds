@@ -395,9 +395,7 @@ function initSocketConnection(url) {
       transports: ['websocket', 'polling']
     });
   } else {
-    socket = io({
-      transports: ['websocket', 'polling']
-    });
+    socket = io();
   }
 
   bindSocketEvents();
