@@ -68,10 +68,13 @@ function createDeck() {
 
 // Helper: Shuffle deck (Fisher-Yates algorithm)
 function shuffle(deck) {
-  const shuffled = [...deck];
-  for (let i = shuffled.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  let shuffled = [...deck];
+  // Triple shuffle for thorough randomness
+  for (let shuffleCount = 0; shuffleCount < 3; shuffleCount++) {
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
   }
   return shuffled;
 }
@@ -941,20 +944,13 @@ function startGameInRoom(room) {
     room.currentSelectedColor = startCard.color;
   }
 
-  if (startCard.value === 'skip') {
-    room.turnIndex = getNextTurnIndex(room, 1);
-  } else if (startCard.value === 'reverse') {
+  // If the starting card is a Reverse, it changes the direction of play.
+  // Other starting power card action effects (Skip, Draw Two) are ignored,
+  // meaning no players are skipped or forced to draw cards, and the host starts.
+  if (startCard.value === 'reverse') {
     room.direction = -1;
-    if (room.players.length === 2) {
-      room.turnIndex = getNextTurnIndex(room, 1);
-    } else {
-      room.turnIndex = 0;
-    }
-  } else if (startCard.value === 'draw2') {
-    const firstPlayer = room.players[room.turnIndex];
-    firstPlayer.hand.push(...drawCardFromDeck(room, 2));
-    room.turnIndex = getNextTurnIndex(room, 1);
   }
+  room.turnIndex = 0;
 }
 
 // Bot Automation Engine
